@@ -20,8 +20,8 @@ export default function App() {
         <Route path="products" element={<Products />} />
         <Route path="products/:slug" element={<ProductDetail />} />
         <Route path="cart" element={<Cart />} />
-        <Route path="checkout-demo" element={<Checkout />} />
-        <Route path="order-demo/confirmation" element={<Confirmation />} />
+        <Route path="checkout" element={<Checkout />} />
+        <Route path="order/confirmation" element={<Confirmation />} />
         <Route path="orders" element={<Orders />} />
         <Route path="admin" element={<Admin />} />
         <Route path="about" element={<About />} />

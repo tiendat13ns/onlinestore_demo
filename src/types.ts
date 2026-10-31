@@ -9,7 +9,7 @@ export interface CategoryInfo {
 export const CATEGORIES: CategoryInfo[] = [
   { id: 'deskmat', label: 'Deskmat', description: 'Tấm lót bàn cho góc làm việc và chơi game.' },
   { id: 'cable', label: 'Quản lý dây', description: 'Phụ kiện giữ dây gọn gàng trên bàn.' },
-  { id: 'bundle', label: 'Bộ sản phẩm', description: 'Các bộ phối sẵn do nhóm chọn.' },
+  { id: 'bundle', label: 'Bộ sản phẩm', description: 'Các bộ phối sẵn để bắt đầu nhanh.' },
 ];
 
 export function isCategory(value: string | null): value is CategoryId {
@@ -23,7 +23,7 @@ export interface ProductImage {
 
 export interface Spec {
   name: string;
-  /** null = chưa có dữ liệu → hiển thị "Cần nhóm xác nhận" */
+  /** null = không có giá trị → ẩn dòng này khi hiển thị */
   value: string | null;
 }
 
@@ -35,7 +35,7 @@ export interface BundleComponent {
 export interface Variant {
   id: string;
   productId: string;
-  /** Ví dụ { Cỡ: 'M', Màu: 'Đen' } — chỉ các tổ hợp hợp lệ mới có variant. */
+  /** Ví dụ { Cỡ: 'M', Màu: 'Đen' }. Chỉ các tổ hợp hợp lệ mới có variant. */
   attributes: Record<string, string>;
   /** Số nguyên đơn vị tiền nhỏ nhất; null = chưa có giá (không được coi là 0). */
   price: number | null;
@@ -67,7 +67,6 @@ export interface Product {
 export interface Catalog {
   /** Mã ISO 4217; null = chưa xác nhận. */
   currency: string | null;
-  isFixture: boolean;
   products: Product[];
 }
 
@@ -76,7 +75,7 @@ export interface CartLine {
   quantity: number;
 }
 
-export interface DemoOrderLine {
+export interface OrderLine {
   variantId: string;
   name: string;
   quantity: number;
@@ -90,23 +89,23 @@ export type OrderStatus = 'pending' | 'confirmed' | 'shipping' | 'completed' | '
 export const STATUS_LABELS: Record<OrderStatus, string> = {
   pending: 'Chờ xác nhận',
   confirmed: 'Đã xác nhận',
-  shipping: 'Đang giao (mô phỏng)',
+  shipping: 'Đang giao',
   completed: 'Hoàn tất',
   cancelled: 'Đã hủy',
 };
 
-export interface DemoOrder {
+export interface Order {
   code: string;
   createdAt: string;
   status: OrderStatus;
   currency: string | null;
-  lines: DemoOrderLine[];
+  lines: OrderLine[];
   subtotal: number;
   customerName?: string;
 }
 
 /** Đơn đầy đủ cho admin. */
-export interface AdminOrder extends DemoOrder {
+export interface AdminOrder extends Order {
   customerPhone: string;
   customerAddress: string;
 }

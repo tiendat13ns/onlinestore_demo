@@ -1,17 +1,16 @@
 import { useState, type ReactNode } from 'react';
 import { Link } from 'react-router-dom';
-import { CONFIRM } from '../config';
 import { useCart } from '../lib/CartContext';
 import { useTitle } from '../lib/useTitle';
 
-function PolicyTable({ rows }: { rows: string[] }) {
+function PolicyTable({ rows }: { rows: [string, string][] }) {
   return (
     <table>
       <tbody>
-        {rows.map((row) => (
-          <tr key={row}>
-            <th scope="row">{row}</th>
-            <td>{CONFIRM}</td>
+        {rows.map(([label, value]) => (
+          <tr key={label}>
+            <th scope="row">{label}</th>
+            <td>{value}</td>
           </tr>
         ))}
       </tbody>
@@ -19,12 +18,12 @@ function PolicyTable({ rows }: { rows: string[] }) {
   );
 }
 
-function PolicyPage({ title, notice, children }: { title: string; notice: string; children: ReactNode }) {
+function PolicyPage({ title, intro, children }: { title: string; intro: string; children: ReactNode }) {
   useTitle(title);
   return (
     <>
       <h1>{title}</h1>
-      <p className="callout">{notice}</p>
+      <p className="lead">{intro}</p>
       {children}
     </>
   );
@@ -32,12 +31,15 @@ function PolicyPage({ title, notice, children }: { title: string; notice: string
 
 export function ShippingPage() {
   return (
-    <PolicyPage
-      title="Giao hàng — concept học tập"
-      notice="Bản demo không nhận đơn mua thật và không thực hiện giao hàng. Nội dung dưới đây chỉ mô tả kế hoạch của concept, không phải cam kết giao hàng."
-    >
+    <PolicyPage title="Chính sách giao hàng" intro="Thông tin về phạm vi, thời gian và phí giao hàng.">
       <PolicyTable
-        rows={['Phạm vi giao dự kiến', 'Đơn vị giao dự kiến', 'Thời gian xử lý/giao', 'Phí và cách tính', 'Trường hợp ngoại lệ']}
+        rows={[
+          ['Phạm vi giao hàng', 'Toàn quốc'],
+          ['Thời gian xử lý đơn', '1–2 ngày làm việc sau khi đơn được xác nhận'],
+          ['Thời gian giao hàng', '2–5 ngày làm việc tùy khu vực'],
+          ['Phí vận chuyển', 'Tính theo khu vực nhận hàng và thông báo khi xác nhận đơn'],
+          ['Thanh toán', 'Thanh toán khi nhận hàng (COD)'],
+        ]}
       />
     </PolicyPage>
   );
@@ -45,19 +47,14 @@ export function ShippingPage() {
 
 export function ReturnsPage() {
   return (
-    <PolicyPage
-      title="Đổi trả — concept học tập"
-      notice="Không có mua bán thực tế trên bản demo, vì vậy không phát sinh đổi trả hoặc hoàn tiền thật."
-    >
+    <PolicyPage title="Chính sách đổi trả" intro="Điều kiện và cách thức đổi trả sản phẩm.">
       <PolicyTable
         rows={[
-          'Trường hợp được/không được đổi trả',
-          'Thời hạn',
-          'Tình trạng sản phẩm',
-          'Bằng chứng yêu cầu',
-          'Quy trình',
-          'Người chịu phí',
-          'Cách xử lý',
+          ['Thời hạn', 'Trong 7 ngày kể từ khi nhận hàng'],
+          ['Trường hợp được đổi trả', 'Sản phẩm lỗi do nhà sản xuất hoặc giao sai mẫu, sai màu, sai cỡ'],
+          ['Tình trạng sản phẩm', 'Còn nguyên bao bì, chưa qua sử dụng nhiều'],
+          ['Chi phí', 'Chúng tôi chịu phí vận chuyển nếu lỗi thuộc về cửa hàng'],
+          ['Cách thực hiện', 'Liên hệ cửa hàng kèm mã đơn hàng để được hướng dẫn'],
         ]}
       />
     </PolicyPage>
@@ -65,32 +62,34 @@ export function ReturnsPage() {
 }
 
 export function PrivacyPage() {
-  const { clearDemoData } = useCart();
+  const { clearLocalData } = useCart();
   const [done, setDone] = useState(false);
 
   const onClear = () => {
-    clearDemoData();
+    clearLocalData();
     setDone(true);
   };
 
   return (
-    <PolicyPage
-      title="Quyền riêng tư — concept học tập"
-      notice="Khi đặt đơn mô phỏng, website chỉ yêu cầu họ tên, số điện thoại và địa chỉ — hãy nhập dữ liệu giả. Không yêu cầu email hay thông tin thanh toán; không có tài khoản khách hàng hoặc newsletter."
-    >
+    <PolicyPage title="Chính sách quyền riêng tư" intro="Chúng tôi thu thập và sử dụng thông tin của bạn như thế nào.">
+      <h2>Thông tin chúng tôi thu thập</h2>
       <ul>
-        <li>Giỏ và các mã đơn đã đặt được lưu trong phiên của tab trình duyệt để duy trì trải nghiệm mô phỏng.</li>
-        <li>Đơn mô phỏng (gồm họ tên, số điện thoại, địa chỉ bạn nhập) được lưu trong cơ sở dữ liệu của máy chủ demo và admin của dự án có thể xem. Không gửi cho bên thứ ba.</li>
-        <li>Nút "Xóa dữ liệu demo" chỉ xóa dữ liệu trong trình duyệt của bạn, không xóa đơn đã lưu trên máy chủ.</li>
-        <li>MVP không cài analytics, pixel quảng cáo hay nhúng chat/dịch vụ theo dõi.</li>
-        <li>Hosting, log kỹ thuật, thời hạn lưu và bên tiếp cận: {CONFIRM}.</li>
+        <li>Họ tên, số điện thoại và địa chỉ nhận hàng khi bạn đặt đơn, chỉ để xử lý và liên hệ về đơn hàng đó.</li>
+        <li>Giỏ hàng và mã các đơn đã đặt được lưu tạm trong trình duyệt của bạn.</li>
       </ul>
+      <h2>Cách chúng tôi sử dụng</h2>
+      <ul>
+        <li>Thông tin đơn hàng được lưu trên hệ thống của cửa hàng và không chia sẻ cho bên thứ ba.</li>
+        <li>Chúng tôi không dùng công cụ phân tích hay quảng cáo theo dõi người dùng.</li>
+      </ul>
+      <h2>Dữ liệu trên trình duyệt</h2>
+      <p>Bạn có thể xóa giỏ hàng và lịch sử đơn đã lưu trên trình duyệt này bất cứ lúc nào.</p>
       <button type="button" className="btn btn-secondary" onClick={onClear}>
-        Xóa dữ liệu demo
+        Xóa giỏ hàng và lịch sử đơn
       </button>
       {done && (
         <p role="status">
-          Đã xóa giỏ và kết quả mô phỏng. <Link to="/products">Xem sản phẩm</Link>
+          Đã xóa. <Link to="/products">Xem sản phẩm</Link>
         </p>
       )}
     </PolicyPage>

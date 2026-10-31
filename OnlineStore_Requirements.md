@@ -423,6 +423,8 @@ Người dùng yêu cầu (31/10/2026) demo thêm: form thông tin nhận hàng,
 | Điều khoản cũ | Thay đổi trong v1.1 |
 | --- | --- |
 | 4.2: không ô nhập tên/SĐT/địa chỉ | Checkout có 3 ô: tên, số điện thoại, địa chỉ. Bắt buộc nhắc "chỉ nhập dữ liệu giả"; không ô ghi chú tự do, không upload |
+| 4.1, AC-01: thông báo "Student project – E-Business, Hanoi University" đầu mọi trang | Theo yêu cầu người dùng (31/10/2026), đã gỡ dải thông báo đầu trang. Dòng nhận diện dự án vẫn còn ở footer và trang Về dự án. Cần nhóm tự đối chiếu đề bài xem có bắt buộc hiển thị không |
+| Toàn bộ nhãn "demo / học tập / Dữ liệu kiểm thử / Cần nhóm xác nhận" trên giao diện | Theo yêu cầu người dùng (31/10/2026), giao diện trình bày như một cửa hàng thương hiệu cá nhân. Thông số, giá và chính sách trong `src/data/catalog.ts` và `src/pages/Policies.tsx` là nội dung mẫu do người phát triển soạn, cần thay bằng nội dung thật. Route checkout đổi thành `/checkout`, `/order/confirmation`; mã đơn có tiền tố `OD-` |
 | 4.2, 3: không admin | Có trang `/admin` dùng mật khẩu demo cấu hình bằng biến môi trường `ADMIN_PASSWORD`. Không có tài khoản khách hàng |
 | 4.2, 3: không "còn X món" | Storefront chỉ hiện "Hết hàng" và chặn thêm giỏ khi tồn kho 0; không hiện số tồn kho. Admin thấy số tồn kho |
 | 10.3, 11.2: lưu cục bộ, không gọi API | Giỏ vẫn ở `sessionStorage`. Đơn được gửi tới API `POST /api/orders` và lưu SQLite; server tính lại giá từ DB, không tin giá từ client |

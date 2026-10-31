@@ -1,9 +1,10 @@
 import { useMemo, useRef, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { priceText } from '../components/ProductCard';
+import { artFor } from '../components/art';
 import ProductImage from '../components/ProductImage';
 import { CatalogGate, NotFoundMessage } from '../components/StatusMessages';
-import { CONFIRM, MAX_QTY, QTY_ERROR } from '../config';
+import { MAX_QTY, QTY_ERROR } from '../config';
 import { useCart } from '../lib/CartContext';
 import { displayName, useCatalog } from '../lib/CatalogContext';
 import { formatMoney, parseQuantity } from '../lib/money';
@@ -49,11 +50,11 @@ function ProductView({ product }: { product: Product }) {
   const blockedReason = (() => {
     const candidates = variant ? [variant] : product.variants;
     if (!priceKnown || candidates.every((v) => v.price === null)) {
-      return 'Chưa thể thêm vào giỏ: giá/đơn vị tiền cần nhóm xác nhận.';
+      return 'Sản phẩm sắp ra mắt.';
     }
     if (candidates.every((v) => v.inStock === false)) return 'Hết hàng.';
     if (product.kind === 'bundle' && candidates.every((v) => !v.components?.length)) {
-      return 'Chưa thể thêm bộ: thành phần và giá bộ cần nhóm xác nhận.';
+      return 'Bộ sản phẩm này tạm thời chưa mở bán.';
     }
     return null;
   })();
@@ -114,7 +115,14 @@ function ProductView({ product }: { product: Product }) {
 
   const price = variant ? formatMoney(variant.price, catalog.currency) : priceText(product, catalog.currency);
   const image = product.images[imageIndex];
-  const specs = variant?.specs ?? product.variants[0]?.specs ?? [];
+  const specs = (variant?.specs ?? product.variants[0]?.specs ?? []).filter((s) => s.value !== null);
+  const includesList =
+    product.kind === 'bundle'
+      ? (variant?.components?.map((c) => {
+          const child = variantIndex.get(c.variantId);
+          return `${c.quantity} × ${child ? displayName(child.product, child.variant) : c.variantId}`;
+        }) ?? null)
+      : product.includes;
   const related = product.relatedIds
     .map((id) => catalog.products.find((p) => p.id === id))
     .filter((p) => p !== undefined)
@@ -129,7 +137,7 @@ function ProductView({ product }: { product: Product }) {
 
       <div className="detail">
         <div className="gallery">
-          <ProductImage image={image} className="gallery-main" />
+          <ProductImage image={image} art={artFor(product, variant, imageIndex)} className="gallery-main" />
           <p className="small muted">
             Ảnh {imageIndex + 1}/{product.images.length}
           </p>
@@ -143,7 +151,7 @@ function ProductView({ product }: { product: Product }) {
                 aria-label={`Xem ảnh ${i + 1}: ${img.alt}`}
                 onClick={() => setImageIndex(i)}
               >
-                <ProductImage image={img} />
+                <ProductImage image={img} art={artFor(product, variant, i)} />
               </button>
             ))}
           </div>
@@ -153,8 +161,6 @@ function ProductView({ product }: { product: Product }) {
           <h1>{product.name}</h1>
           <p>{product.shortDescription}</p>
           <p className="price big">{price}</p>
-          <p className="small muted">Concept học tập — không bán thật</p>
-          {catalog.isFixture && <p className="fixture small">Dữ liệu kiểm thử</p>}
 
           {attributes.map((a, i) => (
             <fieldset key={a.name} id={`attr-${i}`} tabIndex={-1}>
@@ -210,7 +216,7 @@ function ProductView({ product }: { product: Product }) {
           <button type="button" className="btn" disabled={blockedReason !== null} onClick={onAdd}>
             Thêm vào giỏ
           </button>
-          {blockedReason && <p className="error">{blockedReason}</p>}
+          {blockedReason && <p className="muted">{blockedReason}</p>}
           {addError && (
             <p role="alert" className="error">
               {addError}
@@ -229,53 +235,41 @@ function ProductView({ product }: { product: Product }) {
         </div>
       </div>
 
-      <section aria-labelledby="desc-h">
+      <div className="detail-info">
+      <section aria-labelledby="desc-h" data-reveal>
         <h2 id="desc-h">Mô tả</h2>
         <p>{product.description}</p>
-        <p>Cách dùng/bảo quản: {product.usage ?? CONFIRM}</p>
+        {product.usage && <p>Cách dùng và bảo quản: {product.usage}</p>}
       </section>
 
-      <section aria-labelledby="spec-h">
-        <h2 id="spec-h">Thông số</h2>
-        <table>
-          <tbody>
-            {specs.map((s) => (
-              <tr key={s.name}>
-                <th scope="row">{s.name}</th>
-                <td>{s.value ?? CONFIRM}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </section>
+      {specs.length > 0 && (
+        <section aria-labelledby="spec-h" data-reveal>
+          <h2 id="spec-h">Thông số</h2>
+          <table>
+            <tbody>
+              {specs.map((s) => (
+                <tr key={s.name}>
+                  <th scope="row">{s.name}</th>
+                  <td>{s.value}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </section>
+      )}
 
-      <section aria-labelledby="inc-h">
-        <h2 id="inc-h">Thành phần</h2>
-        {product.kind === 'bundle' ? (
-          variant?.components ? (
-            <ul>
-              {variant.components.map((c) => {
-                const child = variantIndex.get(c.variantId);
-                return (
-                  <li key={c.variantId}>
-                    {c.quantity} × {child ? displayName(child.product, child.variant) : c.variantId}
-                  </li>
-                );
-              })}
-            </ul>
-          ) : (
-            <p>{CONFIRM}</p>
-          )
-        ) : product.includes ? (
+      {includesList && includesList.length > 0 && (
+        <section aria-labelledby="inc-h" data-reveal>
+          <h2 id="inc-h">{product.kind === 'bundle' ? 'Bộ gồm' : 'Trong hộp'}</h2>
           <ul>
-            {product.includes.map((item) => (
+            {includesList.map((item) => (
               <li key={item}>{item}</li>
             ))}
           </ul>
-        ) : (
-          <p>{CONFIRM}</p>
-        )}
-      </section>
+        </section>
+      )}
+
+      </div>
 
       {related.length > 0 && (
         <section aria-labelledby="rel-h">
@@ -283,7 +277,7 @@ function ProductView({ product }: { product: Product }) {
           <ul>
             {related.map((p) => (
               <li key={p.id}>
-                {p.name} — <Link to={`/products/${p.slug}`}>Xem chi tiết</Link>
+                {p.name}: <Link to={`/products/${p.slug}`}>Xem chi tiết</Link>
               </li>
             ))}
           </ul>

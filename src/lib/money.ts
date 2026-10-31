@@ -1,8 +1,8 @@
-import { CONFIRM, MAX_QTY } from '../config';
+import { MAX_QTY } from '../config';
 
 /** Tiền lưu dạng số nguyên đơn vị nhỏ nhất; chỉ format khi hiển thị. */
 export function formatMoney(amount: number | null, currency: string | null): string {
-  if (amount === null || currency === null) return CONFIRM;
+  if (amount === null || currency === null) return '—';
   return new Intl.NumberFormat('vi-VN', { style: 'currency', currency }).format(amount);
 }
 
@@ -14,11 +14,11 @@ export function parseQuantity(raw: string): number | null {
   return n >= 1 && n <= MAX_QTY ? n : null;
 }
 
-export function formatDemoTime(iso: string): string {
+export function formatDateTime(iso: string): string {
   const text = new Intl.DateTimeFormat('vi-VN', {
     dateStyle: 'medium',
     timeStyle: 'medium',
     timeZone: 'Asia/Ho_Chi_Minh',
   }).format(new Date(iso));
-  return `${text} (giờ Việt Nam, GMT+7)`;
+  return text;
 }

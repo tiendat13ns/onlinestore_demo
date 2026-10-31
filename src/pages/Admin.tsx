@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState, type FormEvent } from 'react';
 import { ApiError, adminSession, api, type AdminProduct } from '../lib/api';
-import { formatDemoTime, formatMoney } from '../lib/money';
+import { formatDateTime, formatMoney } from '../lib/money';
 import { useTitle } from '../lib/useTitle';
 import { STATUS_LABELS, type AdminOrder, type OrderStatus } from '../types';
 
@@ -32,7 +32,7 @@ function Login({ onDone }: { onDone: () => void }) {
 
   return (
     <form onSubmit={submit} className="lookup">
-      <p className="callout">Khu vực quản trị demo. Mật khẩu do biến môi trường ADMIN_PASSWORD quy định.</p>
+      <p className="lead">Đăng nhập để quản lý đơn hàng, giá và tồn kho.</p>
       <label htmlFor="admin-pw">Mật khẩu admin</label>
       <input id="admin-pw" type="password" autoComplete="off" value={password} onChange={(e) => setPassword(e.target.value)} />
       <button type="submit" className="btn">
@@ -86,7 +86,7 @@ function OrdersTab({ onAuthLost }: { onAuthLost: () => void }) {
           <thead>
             <tr>
               <th scope="col">Mã</th>
-              <th scope="col">Khách (dữ liệu giả)</th>
+              <th scope="col">Khách hàng</th>
               <th scope="col">Sản phẩm</th>
               <th scope="col">Tạm tính</th>
               <th scope="col">Trạng thái</th>
@@ -98,7 +98,7 @@ function OrdersTab({ onAuthLost }: { onAuthLost: () => void }) {
                 <td>
                   {o.code}
                   <br />
-                  <span className="small muted">{formatDemoTime(o.createdAt)}</span>
+                  <span className="small muted">{formatDateTime(o.createdAt)}</span>
                 </td>
                 <td>
                   {o.customerName}
@@ -256,7 +256,7 @@ export default function Admin() {
 
   return (
     <>
-      <h1>Admin demo</h1>
+      <h1>Quản trị</h1>
       {!authed ? (
         <Login onDone={() => setAuthed(true)} />
       ) : (

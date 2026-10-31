@@ -1,19 +1,19 @@
 import { Link } from 'react-router-dom';
 import Totals from '../components/Totals';
 import { useCart } from '../lib/CartContext';
-import { formatDemoTime, formatMoney } from '../lib/money';
+import { formatDateTime, formatMoney } from '../lib/money';
 import { useTitle } from '../lib/useTitle';
 import { STATUS_LABELS } from '../types';
 
 export default function Confirmation() {
   const { order } = useCart();
-  useTitle('Kết quả mô phỏng');
+  useTitle('Đặt hàng thành công');
 
   if (!order) {
     return (
       <>
-        <h1>Kết quả mô phỏng</h1>
-        <p>Chưa có kết quả mô phỏng trong phiên này.</p>
+        <h1>Đơn hàng</h1>
+        <p>Chưa có đơn hàng nào trong phiên này.</p>
         <Link className="btn" to="/products">
           Xem sản phẩm
         </Link>
@@ -23,20 +23,16 @@ export default function Confirmation() {
 
   return (
     <>
-      <h1>Đã hoàn tất mô phỏng</h1>
-      <p className="callout">Đây không phải đơn mua hàng. Không có khoản tiền nào được thu và không có hàng hóa được giao.</p>
+      <h1>Đặt hàng thành công</h1>
+      <p className="lead">
+        Cảm ơn {order.customerName ? `${order.customerName}, ` : 'bạn '}đã đặt hàng. Hãy giữ lại mã đơn để tra cứu sau này.
+      </p>
       <p>
-        Mã: <strong>{order.code}</strong>
+        Mã đơn: <strong>{order.code}</strong>
         <br />
         Trạng thái: {STATUS_LABELS[order.status]}
         <br />
-        {order.customerName && (
-          <>
-            Người đặt (dữ liệu giả): {order.customerName}
-            <br />
-          </>
-        )}
-        Thời điểm: {formatDemoTime(order.createdAt)}
+        Thời gian đặt: {formatDateTime(order.createdAt)}
       </p>
 
       <table>
@@ -73,13 +69,10 @@ export default function Confirmation() {
 
       <p>
         <Link className="btn" to="/products">
-          Tiếp tục khám phá
+          Tiếp tục mua sắm
         </Link>{' '}
         <Link className="btn btn-secondary" to="/orders">
-          Lịch sử đơn
-        </Link>{' '}
-        <Link className="btn btn-secondary" to="/">
-          Về trang chủ
+          Đơn hàng của tôi
         </Link>
       </p>
     </>
