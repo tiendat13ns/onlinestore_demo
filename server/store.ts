@@ -1,15 +1,7 @@
 import { randomBytes } from 'node:crypto';
 import type { BundleComponent, Catalog, Product, ProductImage, Spec, Variant } from '../src/types';
-import { all, get, getCurrency, run, transaction } from './db';
-
-export class HttpError extends Error {
-  constructor(
-    public status: number,
-    message: string,
-  ) {
-    super(message);
-  }
-}
+import { getDb, type Queryable } from './db';
+import { HttpError } from './errors';
 
 interface ProductRow {
   id: string;
@@ -20,43 +12,49 @@ interface ProductRow {
   short_description: string;
   description: string;
   usage: string | null;
-  includes: string | null;
-  images: string;
-  attribute_names: string;
-  related_ids: string;
+  includes: string[] | null;
+  images: ProductImage[];
+  attribute_names: string[];
+  related_ids: string[];
 }
 
 interface VariantRow {
   id: string;
   product_id: string;
-  attributes: string;
+  attributes: Record<string, string>;
   price: number | null;
   stock: number;
-  specs: string;
-  components: string | null;
+  specs: Spec[];
+  components: BundleComponent[] | null;
 }
-
-const parse = <T>(text: string | null): T | null => (text === null ? null : (JSON.parse(text) as T));
 
 type AdminVariant = Variant & { stock: number };
 type AdminProduct = Omit<Product, 'variants'> & { variants: AdminVariant[] };
 
 function toVariant(row: VariantRow): AdminVariant {
-  const components = parse<BundleComponent[]>(row.components);
   return {
     id: row.id,
     productId: row.product_id,
-    attributes: parse<Record<string, string>>(row.attributes) ?? {},
+    attributes: row.attributes ?? {},
     price: row.price,
-    specs: parse<Spec[]>(row.specs) ?? [],
-    ...(components ? { components } : {}),
+    specs: row.specs ?? [],
+    ...(row.components ? { components: row.components } : {}),
     stock: row.stock,
   };
 }
 
-function loadProducts(): AdminProduct[] {
-  const variants = all<VariantRow>('SELECT * FROM variants ORDER BY sort_order');
-  return all<ProductRow>('SELECT * FROM products ORDER BY sort_order').map((p) => ({
+export async function getCurrency(q: Queryable = getDb()): Promise<string | null> {
+  const rows = await q.query<{ value: string }>('select value from settings where key = $1', ['currency']);
+  return rows[0]?.value ?? null;
+}
+
+async function loadProducts(): Promise<AdminProduct[]> {
+  const db = getDb();
+  const [products, variants] = await Promise.all([
+    db.query<ProductRow>('select * from products order by sort_order'),
+    db.query<VariantRow>('select * from variants order by sort_order'),
+  ]);
+  return products.map((p) => ({
     id: p.id,
     slug: p.slug,
     name: p.name,
@@ -65,29 +63,34 @@ function loadProducts(): AdminProduct[] {
     shortDescription: p.short_description,
     description: p.description,
     usage: p.usage,
-    includes: parse<string[]>(p.includes),
-    images: parse<ProductImage[]>(p.images) ?? [],
-    attributeNames: parse<string[]>(p.attribute_names) ?? [],
-    relatedIds: parse<string[]>(p.related_ids) ?? [],
+    includes: p.includes,
+    images: p.images ?? [],
+    attributeNames: p.attribute_names ?? [],
+    relatedIds: p.related_ids ?? [],
     variants: variants.filter((v) => v.product_id === p.id).map(toVariant),
   }));
 }
 
 /** Catalog công khai: chỉ lộ `inStock`, không lộ số tồn kho. */
-export function publicCatalog(): Catalog {
-  const products = loadProducts().map((p) => ({
-    ...p,
-    variants: p.variants.map(({ stock, ...v }) => ({ ...v, inStock: stock > 0 })),
-  }));
-  return { currency: getCurrency(), products };
+export async function publicCatalog(): Promise<Catalog> {
+  const [products, currency] = await Promise.all([loadProducts(), getCurrency()]);
+  return {
+    currency,
+    products: products.map((p) => ({
+      ...p,
+      variants: p.variants.map(({ stock, ...v }) => ({ ...v, inStock: stock > 0 })),
+    })),
+  };
 }
 
-export function adminProducts() {
+export function adminProducts(): Promise<AdminProduct[]> {
   return loadProducts();
 }
 
-export function updateVariant(id: string, patch: { price?: unknown; stock?: unknown }) {
-  const existing = get<VariantRow>('SELECT * FROM variants WHERE id = ?', id);
+export async function updateVariant(id: string, patch: { price?: unknown; stock?: unknown }) {
+  const db = getDb();
+  const rows = await db.query<VariantRow>('select * from variants where id = $1', [id]);
+  const existing = rows[0];
   if (!existing) throw new HttpError(404, 'Không tìm thấy biến thể.');
 
   let price = existing.price;
@@ -104,7 +107,7 @@ export function updateVariant(id: string, patch: { price?: unknown; stock?: unkn
     }
     stock = patch.stock as number;
   }
-  run('UPDATE variants SET price = ?, stock = ? WHERE id = ?', price, stock, id);
+  await db.query('update variants set price = $1, stock = $2 where id = $3', [price, stock, id]);
   return toVariant({ ...existing, price, stock });
 }
 
@@ -123,7 +126,7 @@ const NEXT: Record<OrderStatus, OrderStatus[]> = {
 
 interface OrderRow {
   code: string;
-  created_at: string;
+  created_at: Date | string;
   status: OrderStatus;
   customer_name: string;
   customer_phone: string;
@@ -133,30 +136,30 @@ interface OrderRow {
 }
 
 interface LineRow {
+  order_code: string;
   variant_id: string;
   name: string;
   quantity: number;
   unit_price: number;
   line_total: number;
-  components: string;
+  components: string[];
 }
 
-function toOrder(row: OrderRow, includeContact: boolean) {
-  const lines = all<LineRow>('SELECT * FROM order_lines WHERE order_code = ? ORDER BY id', row.code).map((l) => ({
-    variantId: l.variant_id,
-    name: l.name,
-    quantity: l.quantity,
-    unitPrice: l.unit_price,
-    lineTotal: l.line_total,
-    components: parse<string[]>(l.components) ?? [],
-  }));
+function toOrder(row: OrderRow, lines: LineRow[], includeContact: boolean) {
   return {
     code: row.code,
-    createdAt: row.created_at,
+    createdAt: new Date(row.created_at).toISOString(),
     status: row.status,
     currency: row.currency,
     subtotal: row.subtotal,
-    lines,
+    lines: lines.map((l) => ({
+      variantId: l.variant_id,
+      name: l.name,
+      quantity: l.quantity,
+      unitPrice: l.unit_price,
+      lineTotal: l.line_total,
+      components: l.components ?? [],
+    })),
     customerName: row.customer_name,
     // SĐT và địa chỉ chỉ trả cho admin; tra cứu công khai theo mã không lộ.
     ...(includeContact ? { customerPhone: row.customer_phone, customerAddress: row.customer_address } : {}),
@@ -170,14 +173,13 @@ function text(value: unknown, label: string, max: number): string {
   return trimmed;
 }
 
-function newCode(): string {
-  for (;;) {
-    const code = `OD-${randomBytes(4).toString('hex').toUpperCase()}`;
-    if (!get('SELECT 1 FROM orders WHERE code = ?', code)) return code;
-  }
+const newCode = () => `OD-${randomBytes(4).toString('hex').toUpperCase()}`;
+
+function label(attributes: Record<string, string>): string {
+  return Object.values(attributes ?? {}).join(' / ');
 }
 
-export function createOrder(body: unknown) {
+export async function createOrder(body: unknown) {
   const input = body as { lines?: unknown; customer?: Record<string, unknown> };
   const name = text(input?.customer?.name, 'họ tên', 100);
   const phone = text(input?.customer?.phone, 'số điện thoại', 30);
@@ -195,78 +197,103 @@ export function createOrder(body: unknown) {
     wanted.set(l.variantId, (wanted.get(l.variantId) ?? 0) + (l.quantity as number));
   }
 
-  const currency = getCurrency();
+  const db = getDb();
+  const currency = await getCurrency();
   if (!currency) throw new HttpError(400, 'Cửa hàng chưa cấu hình đơn vị tiền.');
 
-  return transaction(() => {
+  // Khóa các dòng theo thứ tự cố định để hai đơn đồng thời không bị deadlock.
+  const ids = [...wanted.keys()].sort();
+
+  return db.transaction(async (tx) => {
     const code = newCode();
-    const createdAt = new Date().toISOString();
     let subtotal = 0;
     const lines: { variantId: string; name: string; quantity: number; price: number; components: string[] }[] = [];
 
-    for (const [variantId, quantity] of wanted) {
+    for (const variantId of ids) {
+      const quantity = wanted.get(variantId)!;
       if (quantity > 99) throw new HttpError(400, 'Tổng số lượng vượt tối đa 99 sản phẩm cho mỗi mẫu.');
-      const row = get<VariantRow & { product_name: string }>(
-        'SELECT v.*, p.name AS product_name FROM variants v JOIN products p ON p.id = v.product_id WHERE v.id = ?',
-        variantId,
+
+      const rows = await tx.query<VariantRow & { product_name: string }>(
+        'select v.*, p.name as product_name from variants v join products p on p.id = v.product_id where v.id = $1 for update of v',
+        [variantId],
       );
+      const row = rows[0];
       if (!row) throw new HttpError(400, 'Có sản phẩm không còn trong catalog.');
-      const variant = toVariant(row);
-      const label = Object.values(variant.attributes).join(' / ');
-      const display = label ? `${row.product_name} (${label})` : row.product_name;
-      if (variant.price === null) throw new HttpError(400, `${display}: sản phẩm chưa mở bán.`);
-      if (variant.stock < quantity) throw new HttpError(409, `${display}: không đủ hàng.`);
+      const tag = label(row.attributes);
+      const display = tag ? `${row.product_name} (${tag})` : row.product_name;
+      if (row.price === null) throw new HttpError(400, `${display}: sản phẩm chưa mở bán.`);
+      if (row.stock < quantity) throw new HttpError(409, `${display}: không đủ hàng.`);
 
-      run('UPDATE variants SET stock = stock - ? WHERE id = ?', quantity, variantId);
-      const components = (variant.components ?? []).map((c) => {
-        const child = get<{ product_name: string; attributes: string }>(
-          'SELECT p.name AS product_name, v.attributes FROM variants v JOIN products p ON p.id = v.product_id WHERE v.id = ?',
-          c.variantId,
+      await tx.query('update variants set stock = stock - $1 where id = $2', [quantity, variantId]);
+
+      const components: string[] = [];
+      for (const c of row.components ?? []) {
+        const child = await tx.query<{ product_name: string; attributes: Record<string, string> }>(
+          'select p.name as product_name, v.attributes from variants v join products p on p.id = v.product_id where v.id = $1',
+          [c.variantId],
         );
-        const childLabel = child ? Object.values(JSON.parse(child.attributes) as Record<string, string>).join(' / ') : '';
-        return `${c.quantity} × ${child ? (childLabel ? `${child.product_name} (${childLabel})` : child.product_name) : c.variantId}`;
-      });
-      lines.push({ variantId, name: display, quantity, price: variant.price, components });
-      subtotal += variant.price * quantity;
+        const childTag = child[0] ? label(child[0].attributes) : '';
+        const childName = child[0] ? (childTag ? `${child[0].product_name} (${childTag})` : child[0].product_name) : c.variantId;
+        components.push(`${c.quantity} × ${childName}`);
+      }
+      lines.push({ variantId, name: display, quantity, price: row.price, components });
+      subtotal += row.price * quantity;
     }
 
-    run(
-      'INSERT INTO orders (code, created_at, status, customer_name, customer_phone, customer_address, currency, subtotal) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
-      code, createdAt, 'pending', name, phone, address, currency, subtotal,
+    const created = await tx.query<OrderRow>(
+      `insert into orders (code, status, customer_name, customer_phone, customer_address, currency, subtotal)
+       values ($1, 'pending', $2, $3, $4, $5, $6) returning *`,
+      [code, name, phone, address, currency, subtotal],
     );
+    const lineRows: LineRow[] = [];
     for (const l of lines) {
-      run(
-        'INSERT INTO order_lines (order_code, variant_id, name, quantity, unit_price, line_total, components) VALUES (?, ?, ?, ?, ?, ?, ?)',
-        code, l.variantId, l.name, l.quantity, l.price, l.price * l.quantity, JSON.stringify(l.components),
+      const inserted = await tx.query<LineRow>(
+        `insert into order_lines (order_code, variant_id, name, quantity, unit_price, line_total, components)
+         values ($1, $2, $3, $4, $5, $6, $7::jsonb) returning *`,
+        [code, l.variantId, l.name, l.quantity, l.price, l.price * l.quantity, JSON.stringify(l.components)],
       );
+      lineRows.push(inserted[0]);
     }
-    return toOrder(get<OrderRow>('SELECT * FROM orders WHERE code = ?', code)!, false);
+    return toOrder(created[0], lineRows, false);
   });
 }
 
-export function findOrder(code: string, includeContact = false) {
-  const row = get<OrderRow>('SELECT * FROM orders WHERE code = ?', code);
-  return row ? toOrder(row, includeContact) : null;
+export async function findOrder(code: string, includeContact = false) {
+  const db = getDb();
+  const rows = await db.query<OrderRow>('select * from orders where code = $1', [code]);
+  if (!rows[0]) return null;
+  const lines = await db.query<LineRow>('select * from order_lines where order_code = $1 order by id', [code]);
+  return toOrder(rows[0], lines, includeContact);
 }
 
-export function listOrders() {
-  return all<OrderRow>('SELECT * FROM orders ORDER BY created_at DESC').map((r) => toOrder(r, true));
+export async function listOrders() {
+  const db = getDb();
+  const [orders, lines] = await Promise.all([
+    db.query<OrderRow>('select * from orders order by created_at desc limit 500'),
+    db.query<LineRow>('select * from order_lines order by id'),
+  ]);
+  const byOrder = new Map<string, LineRow[]>();
+  for (const l of lines) byOrder.set(l.order_code, [...(byOrder.get(l.order_code) ?? []), l]);
+  return orders.map((o) => toOrder(o, byOrder.get(o.code) ?? [], true));
 }
 
-export function changeStatus(code: string, next: unknown) {
+export async function changeStatus(code: string, next: unknown) {
   if (!STATUSES.includes(next as OrderStatus)) throw new HttpError(400, 'Trạng thái không hợp lệ.');
-  return transaction(() => {
-    const row = get<OrderRow>('SELECT * FROM orders WHERE code = ?', code);
+  return getDb().transaction(async (tx) => {
+    const rows = await tx.query<OrderRow>('select * from orders where code = $1 for update', [code]);
+    const row = rows[0];
     if (!row) throw new HttpError(404, 'Không tìm thấy đơn.');
     if (!NEXT[row.status].includes(next as OrderStatus)) {
       throw new HttpError(409, `Không thể chuyển từ ${row.status} sang ${String(next)}.`);
     }
+    const lines = await tx.query<LineRow>('select * from order_lines where order_code = $1 order by id', [code]);
     if (next === 'cancelled') {
-      for (const l of all<LineRow>('SELECT * FROM order_lines WHERE order_code = ?', code)) {
-        run('UPDATE variants SET stock = stock + ? WHERE id = ?', l.quantity, l.variant_id);
+      // Hoàn kho theo thứ tự cố định để tránh deadlock với đơn khác.
+      for (const l of [...lines].sort((a, b) => a.variant_id.localeCompare(b.variant_id))) {
+        await tx.query('update variants set stock = stock + $1 where id = $2', [l.quantity, l.variant_id]);
       }
     }
-    run('UPDATE orders SET status = ? WHERE code = ?', next as string, code);
-    return toOrder({ ...row, status: next as OrderStatus }, true);
+    await tx.query('update orders set status = $1 where code = $2', [next, code]);
+    return toOrder({ ...row, status: next as OrderStatus }, lines, true);
   });
 }

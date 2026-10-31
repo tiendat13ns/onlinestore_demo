@@ -20,6 +20,8 @@
   "include": [
     "src",
     "server",
+    "netlify",
+    "scripts",
     "vite.config.ts"
   ]
 }

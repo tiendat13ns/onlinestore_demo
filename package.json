@@ -1,25 +1,34 @@
 {
-  "name": "gaming-setup-decor-demo",
+  "name": "nook-studio",
   "private": true,
   "version": "0.1.0",
   "type": "module",
   "scripts": {
-    "dev": "concurrently -k -n web,api \"vite\" \"tsx watch server/index.ts\"",
+    "dev": "concurrently -k -n web,api \"vite\" \"tsx --env-file-if-exists=.env watch server/dev.ts\"",
     "dev:web": "vite",
-    "dev:api": "tsx watch server/index.ts",
+    "dev:api": "tsx --env-file-if-exists=.env watch server/dev.ts",
     "build": "tsc --noEmit && vite build",
-    "start": "tsx server/index.ts",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "test:api": "tsx scripts/smoke.ts",
+    "db:seed-sql": "tsx scripts/gen-seed.ts",
+    "test:pg": "tsx scripts/smoke-pg.ts",
+    "test": "npm run test:api && npm run test:pg",
+    "db:check": "tsx --env-file-if-exists=.env scripts/db-check.ts",
+    "db:setup": "tsx --env-file-if-exists=.env scripts/db-setup.ts"
   },
   "dependencies": {
-    "express": "^5.3.0",
+    "@fontsource/be-vietnam-pro": "^5.3.0",
+    "@fontsource/newsreader": "^5.3.0",
+    "pg": "^8.23.1",
     "react": "^19.3.1",
     "react-dom": "^19.3.1",
     "react-router-dom": "^7.18.5"
   },
   "devDependencies": {
-    "@types/express": "^5.0.6",
+    "@electric-sql/pglite": "^0.5.14",
+    "@electric-sql/pglite-socket": "^0.2.17",
     "@types/node": "^26.6.6",
+    "@types/pg": "^8.23.1",
     "@types/react": "^19.3.0",
     "@types/react-dom": "^19.3.0",
     "@vitejs/plugin-react": "^6.1.2",
@@ -27,5 +36,8 @@
     "tsx": "^4.23.15",
     "typescript": "^7.0.2",
     "vite": "^8.3.5"
+  },
+  "engines": {
+    "node": ">=22"
   }
 }

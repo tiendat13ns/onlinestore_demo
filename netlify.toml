@@ -1,0 +1,29 @@
+[build]
+  command = "npm run build"
+  publish = "dist"
+  functions = "netlify/functions"
+
+[build.environment]
+  NODE_VERSION = "22"
+
+[functions]
+  node_bundler = "esbuild"
+  # pg là thư viện CommonJS có phần tùy chọn (pg-native): để Netlify đóng kèm node_modules/pg thay vì nhét vào bundle.
+  external_node_modules = ["pg"]
+
+# /api/* chạy trong Netlify Function (netlify/functions/api.ts). Phải đứng TRƯỚC luật SPA bên dưới.
+[[redirects]]
+  from = "/api/*"
+  to = "/.netlify/functions/api/:splat"
+  status = 200
+
+# SPA: mở thẳng /products/... hay /cart không bị 404.
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
+
+[[headers]]
+  for = "/assets/*"
+  [headers.values]
+    Cache-Control = "public, max-age=31536000, immutable"

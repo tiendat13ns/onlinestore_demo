@@ -4,3 +4,5 @@ dist
 data
 .taste-skill
 assets
+.env
+.netlify
