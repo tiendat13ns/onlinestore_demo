@@ -1,8 +1,10 @@
 node_modules
 dist
 *.log
-data
-.taste-skill
-assets
 .env
 .netlify
+
+# Chỉ áp dụng cho thư mục ở gốc repo (không chặn src/data/ chứa catalog.ts)
+/data
+/assets
+/.taste-skill
