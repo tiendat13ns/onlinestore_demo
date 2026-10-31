@@ -11,13 +11,11 @@ import { useTitle } from '../lib/useTitle';
 
 type Field = keyof Customer;
 
-const FIELDS: { name: Field; label: string; max: number; missing: string }[] = [
-  { name: 'name', label: 'Họ tên (dữ liệu giả)', max: 100, missing: 'Vui lòng nhập họ tên.' },
-  { name: 'phone', label: 'Số điện thoại (dữ liệu giả)', max: 30, missing: 'Vui lòng nhập số điện thoại.' },
-  { name: 'address', label: 'Địa chỉ (dữ liệu giả)', max: 300, missing: 'Vui lòng nhập địa chỉ.' },
+const FIELDS: { name: Field; label: string; max: number; missing: string; autoComplete: string }[] = [
+  { name: 'name', label: 'Họ tên', max: 100, missing: 'Vui lòng nhập họ tên.', autoComplete: 'name' },
+  { name: 'phone', label: 'Số điện thoại', max: 30, missing: 'Vui lòng nhập số điện thoại.', autoComplete: 'tel' },
+  { name: 'address', label: 'Địa chỉ nhận hàng', max: 300, missing: 'Vui lòng nhập địa chỉ nhận hàng.', autoComplete: 'street-address' },
 ];
-
-const SAMPLE: Customer = { name: 'Nguyễn Văn Demo', phone: '0900000000', address: '1 Đường Demo, Quận Demo, Hà Nội' };
 
 function CheckoutContent() {
   const { saveOrder, clearLines } = useCart();
@@ -26,16 +24,14 @@ function CheckoutContent() {
   const navigate = useNavigate();
   const [customer, setCustomer] = useState<Customer>({ name: '', phone: '', address: '' });
   const [fieldErrors, setFieldErrors] = useState<Partial<Record<Field, string>>>({});
-  const [agreed, setAgreed] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
-  const checkbox = useRef<HTMLInputElement>(null);
   const submitting = useRef(false);
 
   if (views.length === 0) {
     return (
       <>
-        <p>Giỏ hàng mô phỏng đang trống.</p>
+        <p>Giỏ hàng của bạn đang trống.</p>
         <Link className="btn" to="/products">
           Khám phá sản phẩm
         </Link>
@@ -55,11 +51,6 @@ function CheckoutContent() {
       document.getElementById(`customer-${firstBad.name}`)?.focus();
       return;
     }
-    if (!agreed) {
-      setError('Vui lòng xác nhận bạn hiểu đây là mô phỏng.');
-      checkbox.current?.focus();
-      return;
-    }
 
     submitting.current = true;
     setBusy(true);
@@ -72,9 +63,9 @@ function CheckoutContent() {
       );
       saveOrder(order);
       clearLines();
-      navigate('/order-demo/confirmation');
+      navigate('/order/confirmation');
     } catch (err) {
-      setError(err instanceof ApiError ? err.message : 'Chưa hoàn tất mô phỏng. Vui lòng thử lại.');
+      setError(err instanceof ApiError ? err.message : 'Chưa thể đặt hàng. Vui lòng thử lại.');
       // Tồn kho/giá có thể đã đổi; tải lại catalog để giỏ phản ánh đúng. Giỏ không bị xóa.
       if (err instanceof ApiError && err.status === 409) reload();
       setBusy(false);
@@ -83,13 +74,13 @@ function CheckoutContent() {
   };
 
   return (
-    <form onSubmit={onSubmit} noValidate>
+    <form onSubmit={onSubmit} noValidate className="checkout">
       <section aria-labelledby="sum-h">
-        <h2 id="sum-h">Tóm tắt giỏ</h2>
+        <h2 id="sum-h">Đơn hàng của bạn</h2>
         <ul>
           {views.map((v) => (
             <li key={v.variantId}>
-              {v.name} × {v.quantity} — {formatMoney(v.lineTotal, currency)}
+              {v.name} × {v.quantity}, {formatMoney(v.lineTotal, currency)}
               {v.components.length > 0 && (
                 <ul className="small">
                   {v.components.map((c) => (
@@ -110,20 +101,14 @@ function CheckoutContent() {
       </section>
 
       <section aria-labelledby="ship-h">
-        <h2 id="ship-h">Thông tin nhận hàng (dữ liệu giả)</h2>
-        <p className="callout">
-          Chỉ nhập dữ liệu giả. Đừng nhập thông tin cá nhân thật. Không có giao hàng thực tế.
-        </p>
-        <button type="button" className="btn btn-secondary" onClick={() => { setCustomer(SAMPLE); setFieldErrors({}); }}>
-          Điền dữ liệu mẫu
-        </button>
+        <h2 id="ship-h">Thông tin nhận hàng</h2>
         {FIELDS.map((f) => (
           <div key={f.name} className="field">
             <label htmlFor={`customer-${f.name}`}>{f.label}</label>
             <input
               id={`customer-${f.name}`}
               type="text"
-              autoComplete="off"
+              autoComplete={f.autoComplete}
               maxLength={f.max}
               value={customer[f.name]}
               aria-invalid={fieldErrors[f.name] !== undefined}
@@ -143,38 +128,25 @@ function CheckoutContent() {
       </section>
 
       <section aria-labelledby="pay-h">
-        <h2 id="pay-h">Thanh toán mô phỏng</h2>
-        <p>Không thu tiền.</p>
+        <h2 id="pay-h">Thanh toán</h2>
+        <p>Thanh toán khi nhận hàng (COD).</p>
       </section>
 
       <Totals subtotal={subtotal} currency={currency} />
 
       <p className="small">
-        Đọc thêm: <Link to="/policies/shipping">Giao hàng</Link> · <Link to="/policies/returns">Đổi trả</Link> ·{' '}
-        <Link to="/policies/privacy">Quyền riêng tư</Link>
+        Bằng việc đặt hàng, bạn đồng ý với <Link to="/policies/shipping">chính sách giao hàng</Link>,{' '}
+        <Link to="/policies/returns">đổi trả</Link> và <Link to="/policies/privacy">quyền riêng tư</Link>.
       </p>
 
-      <label className="choice">
-        <input
-          ref={checkbox}
-          type="checkbox"
-          checked={agreed}
-          aria-describedby={error ? 'checkout-error' : undefined}
-          onChange={(e) => {
-            setAgreed(e.target.checked);
-            setError(null);
-          }}
-        />
-        <span>Tôi hiểu đây là mô phỏng học tập, thông tin nhập là dữ liệu giả, không đặt mua hoặc thanh toán thật.</span>
-      </label>
       {error && (
-        <p id="checkout-error" role="alert" className="error">
+        <p role="alert" className="error">
           {error}
         </p>
       )}
 
       <button type="submit" className="btn" disabled={busy || hasInvalid}>
-        {busy ? 'Đang xử lý…' : 'Hoàn tất đơn mô phỏng'}
+        {busy ? 'Đang xử lý…' : 'Đặt hàng'}
       </button>{' '}
       <Link className="btn btn-secondary" to="/cart">
         Quay lại giỏ hàng
@@ -184,11 +156,10 @@ function CheckoutContent() {
 }
 
 export default function Checkout() {
-  useTitle('Checkout mô phỏng');
+  useTitle('Đặt hàng');
   return (
     <>
-      <h1>Checkout mô phỏng</h1>
-      <p>Không thanh toán, không giao hàng thật. Chỉ nhập dữ liệu giả.</p>
+      <h1>Đặt hàng</h1>
       <CatalogGate>
         <CheckoutContent />
       </CatalogGate>

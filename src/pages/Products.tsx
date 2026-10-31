@@ -119,8 +119,8 @@ export default function Products() {
       <nav aria-label="Breadcrumb" className="breadcrumb">
         <Link to="/">Trang chủ</Link> / <span aria-current="page">Sản phẩm</span>
       </nav>
-      <h1>Sản phẩm</h1>
-      <p>Danh mục concept học tập. Giá trong bản demo; không bán thật.</p>
+      <h1 data-reveal>Sản phẩm</h1>
+      <p>Deskmat, phụ kiện quản lý dây và bộ sản phẩm cho góc làm việc của bạn.</p>
       <CatalogGate>
         <ProductList />
       </CatalogGate>

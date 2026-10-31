@@ -79,7 +79,7 @@ export function publicCatalog(): Catalog {
     ...p,
     variants: p.variants.map(({ stock, ...v }) => ({ ...v, inStock: stock > 0 })),
   }));
-  return { currency: getCurrency(), isFixture: true, products };
+  return { currency: getCurrency(), products };
 }
 
 export function adminProducts() {
@@ -172,7 +172,7 @@ function text(value: unknown, label: string, max: number): string {
 
 function newCode(): string {
   for (;;) {
-    const code = `DEMO-${randomBytes(4).toString('hex').toUpperCase()}`;
+    const code = `OD-${randomBytes(4).toString('hex').toUpperCase()}`;
     if (!get('SELECT 1 FROM orders WHERE code = ?', code)) return code;
   }
 }
@@ -196,7 +196,7 @@ export function createOrder(body: unknown) {
   }
 
   const currency = getCurrency();
-  if (!currency) throw new HttpError(400, 'Đơn vị tiền chưa được nhóm xác nhận.');
+  if (!currency) throw new HttpError(400, 'Cửa hàng chưa cấu hình đơn vị tiền.');
 
   return transaction(() => {
     const code = newCode();
@@ -205,7 +205,7 @@ export function createOrder(body: unknown) {
     const lines: { variantId: string; name: string; quantity: number; price: number; components: string[] }[] = [];
 
     for (const [variantId, quantity] of wanted) {
-      if (quantity > 99) throw new HttpError(400, 'Tổng số lượng vượt giới hạn demo 99.');
+      if (quantity > 99) throw new HttpError(400, 'Tổng số lượng vượt tối đa 99 sản phẩm cho mỗi mẫu.');
       const row = get<VariantRow & { product_name: string }>(
         'SELECT v.*, p.name AS product_name FROM variants v JOIN products p ON p.id = v.product_id WHERE v.id = ?',
         variantId,
@@ -214,7 +214,7 @@ export function createOrder(body: unknown) {
       const variant = toVariant(row);
       const label = Object.values(variant.attributes).join(' / ');
       const display = label ? `${row.product_name} (${label})` : row.product_name;
-      if (variant.price === null) throw new HttpError(400, `${display}: giá chưa được xác nhận.`);
+      if (variant.price === null) throw new HttpError(400, `${display}: sản phẩm chưa mở bán.`);
       if (variant.stock < quantity) throw new HttpError(409, `${display}: không đủ hàng.`);
 
       run('UPDATE variants SET stock = stock - ? WHERE id = ?', quantity, variantId);

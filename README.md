@@ -1,9 +1,6 @@
-# Gaming Setup Decor — demo
+# Nook Studio
 
-> Student project – E-Business, Hanoi University
-> Website concept phục vụ học tập, không bán hàng thật. Không thanh toán, không giao hàng, chỉ nhập dữ liệu giả.
-
-Storefront demo cho deskmat, phụ kiện quản lý dây và bộ sản phẩm. Đặc tả đầy đủ: [OnlineStore_Requirements.md](OnlineStore_Requirements.md).
+Cửa hàng deskmat, phụ kiện quản lý dây và bộ sản phẩm cho góc làm việc. Tên thương hiệu đổi ở [src/config.ts](src/config.ts). Đặc tả: [OnlineStore_Requirements.md](OnlineStore_Requirements.md).
 
 ## Công nghệ
 
@@ -34,11 +31,12 @@ npm start          # server phục vụ dist/ và API tại http://localhost:300
 
 ## Tính năng
 
-- Danh mục có lọc nhóm và sắp xếp giá, chi tiết sản phẩm với biến thể, giỏ hàng, checkout mô phỏng
+- Danh mục có lọc nhóm và sắp xếp giá, chi tiết sản phẩm với biến thể, giỏ hàng, đặt hàng (COD)
 - Đơn lưu vào DB, trừ tồn kho, xem lại ở `/orders`
-- `/admin`: xem đơn và đổi trạng thái, sửa giá và tồn kho
+- `/admin` (không có link công khai): xem đơn và đổi trạng thái, sửa giá và tồn kho
 
 ## Lưu ý
 
-- Dữ liệu catalog là fixture kiểm thử ([src/data/catalog.ts](src/data/catalog.ts)), nạp vào DB lần chạy đầu. Muốn nạp lại thì xóa `data/store.db`.
-- Thương hiệu, giá thật, thông số và chính sách vẫn là "Cần nhóm xác nhận".
+- Sản phẩm mẫu nằm ở [src/data/catalog.ts](src/data/catalog.ts), được nạp vào DB lần chạy đầu. Muốn nạp lại thì xóa `data/store.db`.
+- Ảnh: bỏ file vào `public/images` rồi điền `src` cho từng ảnh trong catalog.
+- Nội dung chính sách nằm ở [src/pages/Policies.tsx](src/pages/Policies.tsx).

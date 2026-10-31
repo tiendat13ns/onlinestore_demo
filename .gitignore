@@ -2,3 +2,5 @@ node_modules
 dist
 *.log
 data
+.taste-skill
+assets

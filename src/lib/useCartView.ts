@@ -29,11 +29,11 @@ export function useCartView() {
         return {
           variantId: line.variantId,
           quantity: line.quantity,
-          name: 'Sản phẩm không còn trong catalog',
+          name: 'Sản phẩm không còn được bán',
           unitPrice: null,
           lineTotal: null,
           components: [],
-          problem: 'Sản phẩm này không còn trong catalog. Vui lòng xóa và thêm lại từ trang chi tiết.',
+          problem: 'Sản phẩm này không còn được bán. Vui lòng xóa khỏi giỏ.',
         };
       }
       const { product, variant } = entry;
@@ -54,9 +54,9 @@ export function useCartView() {
         lineTotal: hasPrice ? variant.price! * line.quantity : null,
         components,
         problem: !hasPrice
-          ? 'Giá hoặc đơn vị tiền cần nhóm xác nhận; không thể tính dòng này.'
+          ? 'Sản phẩm này hiện chưa có giá. Vui lòng xóa khỏi giỏ.'
           : outOfStock
-            ? 'Sản phẩm này đã hết hàng. Vui lòng xóa dòng này.'
+            ? 'Sản phẩm này đã hết hàng. Vui lòng xóa khỏi giỏ.'
             : undefined,
       };
     });

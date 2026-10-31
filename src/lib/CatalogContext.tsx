@@ -16,7 +16,7 @@ interface CatalogApi {
   reload: () => void;
 }
 
-const emptyCatalog: Catalog = { currency: null, isFixture: false, products: [] };
+const emptyCatalog: Catalog = { currency: null, products: [] };
 const CatalogContext = createContext<CatalogApi | null>(null);
 
 function loadCatalog(): Promise<Catalog> {

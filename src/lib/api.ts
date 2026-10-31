@@ -1,4 +1,4 @@
-import type { AdminOrder, Catalog, DemoOrder, OrderStatus, Product, Variant } from '../types';
+import type { AdminOrder, Catalog, Order, OrderStatus, Product, Variant } from '../types';
 import { readItem, removeItem, writeItem } from './storage';
 
 export class ApiError extends Error {
@@ -52,8 +52,8 @@ const json = (body: unknown) => JSON.stringify(body);
 export const api = {
   catalog: () => request<Catalog>('/api/catalog'),
   createOrder: (lines: { variantId: string; quantity: number }[], customer: Customer) =>
-    request<DemoOrder>('/api/orders', { method: 'POST', body: json({ lines, customer }) }),
-  getOrder: (code: string) => request<DemoOrder>(`/api/orders/${encodeURIComponent(code)}`),
+    request<Order>('/api/orders', { method: 'POST', body: json({ lines, customer }) }),
+  getOrder: (code: string) => request<Order>(`/api/orders/${encodeURIComponent(code)}`),
 
   admin: {
     login: (password: string) => request<{ token: string }>('/api/admin/login', { method: 'POST', body: json({ password }) }),

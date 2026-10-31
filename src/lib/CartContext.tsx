@@ -1,6 +1,6 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
 import { MAX_QTY } from '../config';
-import type { CartLine, DemoOrder } from '../types';
+import type { CartLine, Order } from '../types';
 import { isPersistent, readItem, removeItem, writeItem } from './storage';
 
 const LINES_KEY = 'gsd.cart.v1';
@@ -14,15 +14,15 @@ interface CartApi {
   /** Tổng số đơn vị dòng hàng (một bộ × 2 tính là 2). */
   count: number;
   persistent: boolean;
-  order: DemoOrder | null;
+  order: Order | null;
   /** Mã các đơn đã đặt trong phiên (không có tài khoản nên trình duyệt tự nhớ). */
   orderCodes: string[];
   addItem: (variantId: string, quantity: number) => AddResult;
   setQuantity: (variantId: string, quantity: number) => void;
   removeLine: (variantId: string) => void;
   clearLines: () => void;
-  saveOrder: (order: DemoOrder) => boolean;
-  clearDemoData: () => void;
+  saveOrder: (order: Order) => boolean;
+  clearLocalData: () => void;
 }
 
 const CartContext = createContext<CartApi | null>(null);
@@ -53,10 +53,10 @@ function parseCodes(raw: string | null): string[] {
   }
 }
 
-function parseOrder(raw: string | null): DemoOrder | null {
+function parseOrder(raw: string | null): Order | null {
   if (!raw) return null;
   try {
-    const data = JSON.parse(raw) as DemoOrder;
+    const data = JSON.parse(raw) as Order;
     return typeof data?.code === 'string' && Array.isArray(data.lines) ? data : null;
   } catch {
     return null;
@@ -66,7 +66,7 @@ function parseOrder(raw: string | null): DemoOrder | null {
 export function CartProvider({ children }: { children: ReactNode }) {
   // Chỉ lưu ID + số lượng; giá và tên luôn đối chiếu lại catalog.
   const [lines, setLines] = useState<CartLine[]>(() => parseLines(readItem(LINES_KEY)));
-  const [order, setOrder] = useState<DemoOrder | null>(() => parseOrder(readItem(ORDER_KEY)));
+  const [order, setOrder] = useState<Order | null>(() => parseOrder(readItem(ORDER_KEY)));
   const [orderCodes, setOrderCodes] = useState<string[]>(() => parseCodes(readItem(CODES_KEY)));
   const [persistent, setPersistent] = useState(isPersistent);
 
@@ -84,7 +84,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
       const existing = lines.find((l) => l.variantId === variantId);
       const total = (existing?.quantity ?? 0) + quantity;
       if (total > MAX_QTY) {
-        return { ok: false, error: `Tổng số lượng vượt giới hạn demo ${MAX_QTY}. Giỏ không thay đổi.` };
+        return { ok: false, error: `Tổng số lượng vượt tối đa ${MAX_QTY} sản phẩm cho mỗi mẫu. Giỏ hàng không thay đổi.` };
       }
       setLines(
         existing
@@ -106,7 +106,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
 
   const clearLines = useCallback(() => setLines([]), []);
 
-  const saveOrder = useCallback((next: DemoOrder): boolean => {
+  const saveOrder = useCallback((next: Order): boolean => {
     try {
       writeItem(ORDER_KEY, JSON.stringify(next));
       setOrder(next);
@@ -118,7 +118,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
     }
   }, []);
 
-  const clearDemoData = useCallback(() => {
+  const clearLocalData = useCallback(() => {
     removeItem(LINES_KEY);
     removeItem(ORDER_KEY);
     removeItem(CODES_KEY);
@@ -130,8 +130,8 @@ export function CartProvider({ children }: { children: ReactNode }) {
   const count = useMemo(() => lines.reduce((sum, l) => sum + l.quantity, 0), [lines]);
 
   const value = useMemo(
-    () => ({ lines, count, persistent, order, orderCodes, addItem, setQuantity, removeLine, clearLines, saveOrder, clearDemoData }),
-    [lines, count, persistent, order, orderCodes, addItem, setQuantity, removeLine, clearLines, saveOrder, clearDemoData],
+    () => ({ lines, count, persistent, order, orderCodes, addItem, setQuantity, removeLine, clearLines, saveOrder, clearLocalData }),
+    [lines, count, persistent, order, orderCodes, addItem, setQuantity, removeLine, clearLines, saveOrder, clearLocalData],
   );
   return <CartContext.Provider value={value}>{children}</CartContext.Provider>;
 }

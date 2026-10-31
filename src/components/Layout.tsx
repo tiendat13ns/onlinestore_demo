@@ -1,7 +1,17 @@
 import { useEffect, useRef, useState } from 'react';
 import { Link, NavLink, Outlet, useLocation } from 'react-router-dom';
-import { BRAND_NAME, DISCLAIMER, PROJECT_LINE } from '../config';
+import { BRAND_NAME, COURSE_CREDIT } from '../config';
 import { useCart } from '../lib/CartContext';
+
+const FOOTER_LINKS: [string, string][] = [
+  ['/', 'Trang chủ'],
+  ['/products', 'Sản phẩm'],
+  ['/about', 'Về chúng tôi'],
+  ['/orders', 'Đơn hàng của tôi'],
+  ['/policies/shipping', 'Giao hàng'],
+  ['/policies/returns', 'Đổi trả'],
+  ['/policies/privacy', 'Quyền riêng tư'],
+];
 
 export default function Layout() {
   const { count } = useCart();
@@ -9,11 +19,43 @@ export default function Layout() {
   const [menuOpen, setMenuOpen] = useState(false);
   const menuButton = useRef<HTMLButtonElement>(null);
   const header = useRef<HTMLElement>(null);
+  const prevCount = useRef(count);
+  const [bump, setBump] = useState(0);
+  const isHome = pathname === '/';
+
+  useEffect(() => {
+    if (count > prevCount.current) setBump((b) => b + 1);
+    prevCount.current = count;
+  }, [count]);
 
   useEffect(() => {
     setMenuOpen(false);
     window.scrollTo(0, 0);
   }, [pathname]);
+
+  // Hiệu ứng xuất hiện: mỗi phần tử [data-reveal] hiện một lần khi vào màn hình.
+  useEffect(() => {
+    const io = new IntersectionObserver(
+      (entries) => {
+        for (const e of entries) {
+          if (e.isIntersecting) {
+            e.target.classList.add('in');
+            io.unobserve(e.target);
+          }
+        }
+      },
+      { threshold: 0.15 },
+    );
+    const scan = () => document.querySelectorAll('[data-reveal]:not(.in)').forEach((el) => io.observe(el));
+    scan();
+    const main = document.getElementById('main');
+    const mo = new MutationObserver(scan);
+    if (main) mo.observe(main, { childList: true, subtree: true });
+    return () => {
+      io.disconnect();
+      mo.disconnect();
+    };
+  }, []);
 
   useEffect(() => {
     if (!menuOpen) return;
@@ -39,13 +81,8 @@ export default function Layout() {
         Bỏ qua điều hướng
       </a>
 
-      <div className="project-notice">
-        <strong>{PROJECT_LINE}</strong>
-        <p>{DISCLAIMER}</p>
-      </div>
-
-      <header className="site-header" ref={header}>
-        <div className="container header-row">
+      <header className={isHome ? 'site-header overlay' : 'site-header'} ref={header}>
+        <div className={isHome ? 'header-row wide' : 'header-row'}>
           <Link to="/" className="brand">
             {BRAND_NAME}
           </Link>
@@ -64,31 +101,46 @@ export default function Layout() {
               Trang chủ
             </NavLink>
             <NavLink to="/products">Sản phẩm</NavLink>
-            <NavLink to="/about">Về dự án</NavLink>
+            <NavLink to="/about">Về chúng tôi</NavLink>
           </nav>
           <NavLink to="/cart" className="cart-link">
-            Giỏ hàng ({count})
+            <span>
+              Giỏ hàng (<span key={bump} className={bump ? 'cart-count bump' : 'cart-count'}>{count}</span>)
+            </span>
           </NavLink>
         </div>
       </header>
 
-      <main id="main" tabIndex={-1} className="container">
+      <main id="main" tabIndex={-1} className={isHome ? 'main-full' : 'container'}>
         <Outlet />
       </main>
 
       <footer className="site-footer">
-        <div className="container">
-          <p>
-            <strong>{BRAND_NAME}</strong> — {PROJECT_LINE}
-          </p>
-          <nav aria-label="Liên kết chân trang" className="footer-links">
-            <Link to="/about">Về dự án</Link>
-            <Link to="/orders">Lịch sử đơn</Link>
-            <Link to="/policies/shipping">Giao hàng</Link>
-            <Link to="/policies/returns">Đổi trả</Link>
-            <Link to="/policies/privacy">Quyền riêng tư</Link>
-            <Link to="/admin">Admin</Link>
+        <figure className="footer-photo">
+          <img src="/images/flatlay-keyboard.jpg" alt="Bàn phím và dây cáp trên mặt bàn trắng" width="1920" height="1280" loading="lazy" />
+        </figure>
+        <div className="footer-menu">
+          <p className="footer-brand">{BRAND_NAME}</p>
+          <nav aria-label="Liên kết chân trang">
+            <ul>
+              {FOOTER_LINKS.map(([to, label]) => (
+                <li key={to}>
+                  <Link to={to}>{label}</Link>
+                </li>
+              ))}
+            </ul>
           </nav>
+          <p className="small legal">
+            © 2026 {BRAND_NAME} · {COURSE_CREDIT}
+          </p>
+          <p className="small credits">
+            Ảnh qua Wikimedia Commons:{' '}
+            <a href="https://commons.wikimedia.org/wiki/File:Apple_mouse_and_keyboard_(Unsplash).jpg">Grovemade</a> (CC0),{' '}
+            <a href="https://commons.wikimedia.org/wiki/File:HP_mouse_and_mousepad_20060803.jpg">Lovecz</a> (public domain),{' '}
+            <a href="https://commons.wikimedia.org/wiki/File:A_computer_keyboard_and_mouse_are_positioned_on_a_wooden_des.jpg">Shixart1985</a>{' '}
+            (<a href="https://creativecommons.org/licenses/by/2.0">CC BY 2.0</a>),{' '}
+            <a href="https://commons.wikimedia.org/wiki/File:Top_Workspace_Office.jpg">Kristin Hardwick</a> (CC0).
+          </p>
         </div>
       </footer>
     </>

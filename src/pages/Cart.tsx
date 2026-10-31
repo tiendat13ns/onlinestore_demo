@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import { artFor } from '../components/art';
 import ProductImage from '../components/ProductImage';
 import { CatalogGate } from '../components/StatusMessages';
 import Totals from '../components/Totals';
@@ -49,7 +50,7 @@ function CartContent() {
   if (views.length === 0) {
     return (
       <>
-        <p>Giỏ hàng mô phỏng đang trống.</p>
+        <p>Giỏ hàng của bạn đang trống.</p>
         {removed && <p role="status">{removed}</p>}
         <Link className="btn" to="/products">
           Khám phá sản phẩm
@@ -62,7 +63,6 @@ function CartContent() {
 
   return (
     <>
-      <p className="callout">Đây là giỏ mô phỏng, không phát sinh giao dịch</p>
       {!persistent && <p role="status">Giỏ chỉ được giữ khi bạn còn mở trang này.</p>}
       {removed && <p role="status">{removed}</p>}
 
@@ -73,7 +73,7 @@ function CartContent() {
             const inputId = `qty-${line.variantId}`;
             return (
               <li key={line.variantId} className="cart-line">
-                <ProductImage image={line.image} className="cart-thumb" />
+                <ProductImage image={line.image} art={line.product ? artFor(line.product, line.variant) : undefined} className="cart-thumb" />
                 <div>
                   <h2 className="line-name">
                     {line.product ? <Link to={`/products/${line.product.slug}`}>{line.name}</Link> : line.name}
@@ -134,10 +134,10 @@ function CartContent() {
 
         <aside className="cart-summary" aria-label="Tóm tắt giỏ hàng">
           <Totals subtotal={subtotal} currency={currency} />
-          <button type="button" className="btn" disabled={blocked} onClick={() => navigate('/checkout-demo')}>
-            Bắt đầu checkout mô phỏng
+          <button type="button" className="btn" disabled={blocked} onClick={() => navigate('/checkout')}>
+            Tiến hành đặt hàng
           </button>
-          {blocked && <p className="error small">Hãy sửa hoặc xóa dòng lỗi trước khi checkout.</p>}
+          {blocked && <p className="error small">Hãy sửa hoặc xóa dòng lỗi trước khi đặt hàng.</p>}
           <Link className="btn btn-secondary" to="/products">
             Tiếp tục xem sản phẩm
           </Link>

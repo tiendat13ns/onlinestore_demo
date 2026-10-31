@@ -2,11 +2,11 @@ import { useEffect, useState, type FormEvent } from 'react';
 import { Link } from 'react-router-dom';
 import { ApiError, api } from '../lib/api';
 import { useCart } from '../lib/CartContext';
-import { formatDemoTime, formatMoney } from '../lib/money';
+import { formatDateTime, formatMoney } from '../lib/money';
 import { useTitle } from '../lib/useTitle';
-import { STATUS_LABELS, type DemoOrder } from '../types';
+import { STATUS_LABELS, type Order } from '../types';
 
-type Result = { order: DemoOrder } | { code: string; error: string };
+type Result = { order: Order } | { code: string; error: string };
 
 async function fetchOne(code: string): Promise<Result> {
   try {
@@ -17,7 +17,7 @@ async function fetchOne(code: string): Promise<Result> {
 }
 
 export default function Orders() {
-  useTitle('Lịch sử đơn');
+  useTitle('Đơn hàng của bạn');
   const { orderCodes } = useCart();
   const [results, setResults] = useState<Result[] | null>(null);
   const [lookup, setLookup] = useState('');
@@ -41,10 +41,10 @@ export default function Orders() {
   const render = (r: Result) =>
     'order' in r ? (
       <li key={r.order.code} className="order-row">
-        <strong>{r.order.code}</strong> — {STATUS_LABELS[r.order.status]}
+        <strong>{r.order.code}</strong> · {STATUS_LABELS[r.order.status]}
         <br />
         <span className="small muted">
-          {formatDemoTime(r.order.createdAt)} · {formatMoney(r.order.subtotal, r.order.currency)}
+          {formatDateTime(r.order.createdAt)} · {formatMoney(r.order.subtotal, r.order.currency)}
         </span>
         <ul className="small">
           {r.order.lines.map((l) => (
@@ -62,12 +62,12 @@ export default function Orders() {
 
   return (
     <>
-      <h1>Lịch sử đơn mô phỏng</h1>
-      <p className="callout">Đơn demo, không có hàng hóa được giao. Danh sách bên dưới chỉ gồm các đơn đặt trong phiên này.</p>
+      <h1>Đơn hàng của bạn</h1>
+      <p className="lead">Các đơn bạn đã đặt trên trình duyệt này.</p>
 
       {orderCodes.length === 0 ? (
         <p>
-          Chưa có đơn nào trong phiên này. <Link to="/products">Xem sản phẩm</Link>
+          Bạn chưa có đơn hàng nào. <Link to="/products">Xem sản phẩm</Link>
         </p>
       ) : results === null ? (
         <p role="status">Đang tải…</p>
@@ -77,7 +77,7 @@ export default function Orders() {
 
       <h2>Tra cứu theo mã đơn</h2>
       <form onSubmit={onLookup} className="lookup">
-        <label htmlFor="lookup-code">Mã đơn (bắt đầu bằng DEMO-)</label>
+        <label htmlFor="lookup-code">Mã đơn hàng</label>
         <input id="lookup-code" type="text" value={lookup} onChange={(e) => setLookup(e.target.value)} />
         <button type="submit" className="btn">
           Tra cứu
