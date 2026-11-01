@@ -1,4 +1,4 @@
-import type { CSSProperties, ReactElement } from 'react';
+import type { ReactElement } from 'react';
 import type { Product, Variant } from '../types';
 
 /**
@@ -17,10 +17,10 @@ export interface ArtSpec {
   size: [number, number];
 }
 
-export const MAT_COLORS: Record<string, string> = { Xám: '#5d7385', Đen: '#0f1c26' };
-const SOON = '#e9f3fa';
-const DESK = '#d6e9f5';
-const INK = '#0b2233';
+export const MAT_COLORS: Record<string, string> = { Xám: '#6b6b68', Đen: '#222222' };
+const SOON = '#efede9';
+const DESK = '#e6e4df';
+const INK = '#161616';
 
 /** Đọc "800 × 300 mm" từ thông số; mặc định cỡ M. */
 export function matSize(variant?: Variant): [number, number] {
@@ -43,7 +43,7 @@ export function artFor(product: Product, variant?: Variant, view = 0): ArtSpec {
 function KeyPattern({ id }: { id: string }) {
   return (
     <pattern id={id} width="26" height="26" patternUnits="userSpaceOnUse">
-      <rect x="3" y="3" width="21" height="21" rx="3" fill="#c9dcea" />
+      <rect x="3" y="3" width="21" height="21" rx="3" fill="#dcdad5" />
     </pattern>
   );
 }
@@ -51,7 +51,7 @@ function KeyPattern({ id }: { id: string }) {
 function Keyboard({ x, y, w = 400, h = 130 }: { x: number; y: number; w?: number; h?: number }) {
   return (
     <g>
-      <rect x={x} y={y} width={w} height={h} rx="8" fill="#f8fcff" />
+      <rect x={x} y={y} width={w} height={h} rx="8" fill="#fbfbf9" />
       <rect x={x + 8} y={y + 8} width={w - 16} height={h - 16} fill="url(#keys)" />
     </g>
   );
@@ -60,8 +60,8 @@ function Keyboard({ x, y, w = 400, h = 130 }: { x: number; y: number; w?: number
 function Mouse({ x, y }: { x: number; y: number }) {
   return (
     <g>
-      <rect x={x} y={y} width="62" height="108" rx="30" fill="#f8fcff" />
-      <rect x={x + 29} y={y + 14} width="4" height="26" rx="2" fill="#a9c3d6" />
+      <rect x={x} y={y} width="62" height="108" rx="30" fill="#fbfbf9" />
+      <rect x={x + 29} y={y + 14} width="4" height="26" rx="2" fill="#bdbab4" />
     </g>
   );
 }
@@ -70,9 +70,9 @@ function Clip({ x, y, slots = 3 }: { x: number; y: number; slots?: number }) {
   const w = 24 + slots * 26;
   return (
     <g>
-      <rect x={x} y={y} width={w} height="62" rx="10" fill="#f8fcff" />
+      <rect x={x} y={y} width={w} height="62" rx="10" fill="#fbfbf9" />
       {Array.from({ length: slots }, (_, i) => (
-        <rect key={i} x={x + 16 + i * 26} y={y + 14} width="12" height="34" rx="6" fill="#6f8aa0" />
+        <rect key={i} x={x + 16 + i * 26} y={y + 14} width="12" height="34" rx="6" fill="#8a8782" />
       ))}
     </g>
   );
@@ -116,7 +116,7 @@ export function ProductArt({ art }: { art: ArtSpec }) {
     body = (
       <g>
         <rect width="1200" height="900" fill={DESK} />
-        <rect x="430" y="70" width="340" height="120" rx="8" fill="#17364d" />
+        <rect x="430" y="70" width="340" height="120" rx="8" fill="#2b2b2b" />
         {kind !== 'clip' && mat}
         <Keyboard x={mx + 80} y={450 - 65} />
         <Mouse x={mx + 530} y={450 - 54} />
@@ -147,59 +147,6 @@ export function ProductArt({ art }: { art: ArtSpec }) {
         <KeyPattern id="keys" />
       </defs>
       {body}
-    </svg>
-  );
-}
-
-export type Scene = 'mat' | 'clips' | 'bundle';
-
-/** Hình học SVG qua CSS để CSS transition làm tấm lót đổi cỡ mượt. */
-const geo = (x: number, y: number, w: number, h: number) =>
-  ({ x: `${x}px`, y: `${y}px`, width: `${w}px`, height: `${h}px` }) as unknown as CSSProperties;
-
-/**
- * Sân khấu trang chủ: bàn nhìn từ trên xuống, 1 đơn vị = 0,9 mm.
- * Tấm lót vẽ đúng tỉ lệ kích thước đã chọn; đổi cỡ/màu thì tấm lót đổi theo.
- */
-export function DeskScene({ scene, width, height, color, label }: { scene: Scene; width: number; height: number; color: string; label: string }) {
-  const s = 0.9;
-  const w = width * s;
-  const h = height * s;
-  const cx = 500;
-  const cy = 720;
-  const tidy = scene !== 'mat';
-  return (
-    <svg viewBox="0 0 1000 1100" preserveAspectRatio="xMidYMid slice" className="scene" role="img" aria-label={`Bàn làm việc nhìn từ trên xuống: ${label}`}>
-      <defs>
-        <KeyPattern id="keys-scene" />
-      </defs>
-      <rect width="1000" height="1100" fill={DESK} />
-      <rect x="300" y="110" width="400" height="150" rx="8" fill="#17364d" />
-      {/* Dây lộn xộn khi chưa có kẹp */}
-      <g className="fade" style={{ opacity: tidy ? 0 : 1 }} fill="none" stroke={INK} strokeWidth="9" strokeLinecap="round">
-        <path d="M420 260 C330 360 600 380 470 470 S640 540 560 640" />
-        <path d="M520 260 C640 330 380 400 560 450 S420 560 700 560" />
-        <path d="M600 260 C520 300 700 350 620 420" />
-      </g>
-      {/* Dây gọn trong kẹp */}
-      <g className="fade" style={{ opacity: tidy ? 1 : 0 }}>
-        <g fill="none" stroke={INK} strokeWidth="9" strokeLinecap="round">
-          <path d="M440 260 L440 40" />
-          <path d="M500 260 L500 40" />
-          <path d="M560 260 L560 40" />
-        </g>
-        <Clip x={405} y={150} />
-        <Clip x={490} y={150} slots={2} />
-      </g>
-      <g className="mat">
-        <rect style={geo(cx - w / 2, cy - h / 2 + 8, w, h)} rx="12" fill={INK} />
-        <rect style={{ ...geo(cx - w / 2, cy - h / 2, w, h), fill: color }} rx="12" />
-      </g>
-      <g>
-        <rect x={cx - 240} y={cy - 65} width="400" height="130" rx="8" fill="#f8fcff" />
-        <rect x={cx - 232} y={cy - 57} width="384" height="114" fill="url(#keys-scene)" />
-        <Mouse x={cx + 190} y={cy - 54} />
-      </g>
     </svg>
   );
 }

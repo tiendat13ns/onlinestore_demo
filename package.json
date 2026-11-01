@@ -4,9 +4,9 @@
   "version": "0.1.0",
   "type": "module",
   "scripts": {
-    "dev": "concurrently -k -n web,api \"vite\" \"tsx --env-file-if-exists=.env watch server/dev.ts\"",
+    "dev": "concurrently -k -n web,api \"vite\" \"tsx watch --env-file-if-exists=.env server/dev.ts\"",
     "dev:web": "vite",
-    "dev:api": "tsx --env-file-if-exists=.env watch server/dev.ts",
+    "dev:api": "tsx watch --env-file-if-exists=.env server/dev.ts",
     "build": "tsc --noEmit && vite build",
     "typecheck": "tsc --noEmit",
     "test:api": "tsx scripts/smoke.ts",

@@ -3,16 +3,6 @@ import { Link, NavLink, Outlet, useLocation } from 'react-router-dom';
 import { BRAND_NAME, COURSE_CREDIT } from '../config';
 import { useCart } from '../lib/CartContext';
 
-const FOOTER_LINKS: [string, string][] = [
-  ['/', 'Trang chủ'],
-  ['/products', 'Sản phẩm'],
-  ['/about', 'Về chúng tôi'],
-  ['/orders', 'Đơn hàng của tôi'],
-  ['/policies/shipping', 'Giao hàng'],
-  ['/policies/returns', 'Đổi trả'],
-  ['/policies/privacy', 'Quyền riêng tư'],
-];
-
 export default function Layout() {
   const { count } = useCart();
   const { pathname } = useLocation();
@@ -81,8 +71,10 @@ export default function Layout() {
         Bỏ qua điều hướng
       </a>
 
-      <header className={isHome ? 'site-header overlay' : 'site-header'} ref={header}>
-        <div className={isHome ? 'header-row wide' : 'header-row'}>
+      <p className="announce">Thanh toán khi nhận hàng · Giao toàn quốc trong 2–5 ngày làm việc</p>
+
+      <header className="site-header" ref={header}>
+        <div className="header-row">
           <Link to="/" className="brand">
             {BRAND_NAME}
           </Link>
@@ -116,27 +108,38 @@ export default function Layout() {
       </main>
 
       <footer className="site-footer">
-        <figure className="footer-photo">
-          <img src="/images/flatlay-keyboard.jpg" alt="Bàn phím và dây cáp trên mặt bàn trắng" width="1920" height="1280" loading="lazy" />
-        </figure>
-        <div className="footer-menu">
-          <p className="footer-brand">{BRAND_NAME}</p>
-          <nav aria-label="Liên kết chân trang">
+        <div className="footer-grid wrap">
+          <div className="footer-about">
+            <p className="footer-brand">{BRAND_NAME}</p>
+            <p>Deskmat và phụ kiện quản lý dây tối giản cho góc bàn gọn gàng.</p>
+          </div>
+          <nav aria-label="Cửa hàng">
+            <h2>Cửa hàng</h2>
             <ul>
-              {FOOTER_LINKS.map(([to, label]) => (
-                <li key={to}>
-                  <Link to={to}>{label}</Link>
-                </li>
-              ))}
+              <li><Link to="/products">Tất cả sản phẩm</Link></li>
+              <li><Link to="/products?category=deskmat">Deskmat</Link></li>
+              <li><Link to="/products?category=cable">Quản lý dây</Link></li>
+              <li><Link to="/products?category=bundle">Bộ sản phẩm</Link></li>
             </ul>
           </nav>
-          <p className="small legal">
+          <nav aria-label="Hỗ trợ">
+            <h2>Hỗ trợ</h2>
+            <ul>
+              <li><Link to="/orders">Đơn hàng của tôi</Link></li>
+              <li><Link to="/policies/shipping">Giao hàng</Link></li>
+              <li><Link to="/policies/returns">Đổi trả</Link></li>
+              <li><Link to="/policies/privacy">Quyền riêng tư</Link></li>
+              <li><Link to="/about">Về chúng tôi</Link></li>
+            </ul>
+          </nav>
+        </div>
+        <div className="footer-legal wrap">
+          <p className="small">
             © 2026 {BRAND_NAME} · {COURSE_CREDIT}
           </p>
           <p className="small credits">
             Ảnh qua Wikimedia Commons:{' '}
             <a href="https://commons.wikimedia.org/wiki/File:Apple_mouse_and_keyboard_(Unsplash).jpg">Grovemade</a> (CC0),{' '}
-            <a href="https://commons.wikimedia.org/wiki/File:HP_mouse_and_mousepad_20060803.jpg">Lovecz</a> (public domain),{' '}
             <a href="https://commons.wikimedia.org/wiki/File:A_computer_keyboard_and_mouse_are_positioned_on_a_wooden_des.jpg">Shixart1985</a>{' '}
             (<a href="https://creativecommons.org/licenses/by/2.0">CC BY 2.0</a>),{' '}
             <a href="https://commons.wikimedia.org/wiki/File:Top_Workspace_Office.jpg">Kristin Hardwick</a> (CC0).
