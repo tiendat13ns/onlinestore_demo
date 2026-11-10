@@ -11,7 +11,7 @@ const message = (err: unknown) => (err instanceof ApiError ? err.message : 'Chư
 
 export default function Orders() {
   useTitle('Tra cứu đơn hàng');
-  const { orderRefs, rememberOrder } = useCart();
+  const { orderRefs, rememberOrder, forgetOrders } = useCart();
   const [params] = useSearchParams();
   const location = useLocation();
   const navigate = useNavigate();
@@ -27,6 +27,8 @@ export default function Orders() {
   const [errors, setErrors] = useState<{ code?: string; phone?: string; form?: string }>({});
   const [busy, setBusy] = useState(false);
   const [notice, setNotice] = useState<string | null>(null);
+  // Đơn vừa tra cứu thành công: hiện riêng ở trên, tách khỏi danh sách đơn đã nhớ trên trình duyệt.
+  const [foundCode, setFoundCode] = useState<string | null>(null);
 
   const [confirming, setConfirming] = useState<string | null>(null);
   const [cancelBusy, setCancelBusy] = useState(false);
@@ -77,6 +79,7 @@ export default function Orders() {
       setLoadErrors(({ [order.code]: _, ...rest }) => rest);
       rememberOrder({ code: order.code, phone: order.customerPhone ?? normalizePhone(rawPhone) ?? rawPhone });
       setNotice(`Đã tìm thấy đơn ${order.code}.`);
+      setFoundCode(order.code);
       setCode('');
       setPhone('');
     } catch (err) {
@@ -128,6 +131,55 @@ export default function Orders() {
     } finally {
       setCancelBusy(false);
     }
+  };
+
+  const renderOrder = (order: Order) => (
+    <OrderDetails key={order.code} order={order}>
+              {order.status === 'pending' && (
+                <div className="order-actions">
+                  {confirming === order.code ? (
+                    <div role="group" aria-label="Xác nhận hủy đơn" className="confirm-cancel">
+                      <p>Bạn chắc chắn muốn hủy đơn {order.code}? Hàng sẽ được trả lại kho và không thể hoàn tác.</p>
+                      <button type="button" className="btn btn-danger" disabled={cancelBusy} onClick={() => cancel(order)}>
+                        {cancelBusy ? 'Đang hủy…' : 'Xác nhận hủy đơn'}
+                      </button>{' '}
+                      <button type="button" className="btn btn-secondary" disabled={cancelBusy} onClick={() => setConfirming(null)}>
+                        Giữ đơn
+                      </button>
+                      {cancelError && (
+                        <p role="alert" className="error">
+                          {cancelError}
+                        </p>
+                      )}
+                    </div>
+                  ) : (
+                    <button
+                      type="button"
+                      className="btn btn-secondary"
+                      onClick={() => {
+                        setConfirming(order.code);
+                        setCancelError(null);
+                      }}
+                    >
+                      Hủy đơn
+                    </button>
+                  )}
+                  <p className="small muted">Bạn tự hủy được khi shop chưa liên hệ xác nhận đơn.</p>
+                </div>
+              )}
+              {order.status !== 'pending' && order.status !== 'cancelled' && order.status !== 'completed' && (
+                <p className="small muted">Cần thay đổi đơn đã xác nhận? Liên hệ cửa hàng kèm mã đơn {order.code}.</p>
+              )}
+    </OrderDetails>
+  );
+
+  const foundOrder = foundCode ? orders[foundCode] : undefined;
+  const savedRefs = orderRefs.filter((r) => r.code !== foundCode);
+
+  const forget = () => {
+    forgetOrders();
+    setConfirming(null);
+    setNotice('Đã xóa danh sách đơn trên trình duyệt này. Bạn vẫn tra cứu lại được bằng mã đơn và số điện thoại.');
   };
 
   return (
@@ -195,75 +247,55 @@ export default function Orders() {
           <p className="small muted">Mã đơn có dạng OD-XXXXXXXX và được hiển thị khi đặt hàng thành công.</p>
         </form>
 
-        <section aria-labelledby="mine-h">
-          <h2 id="mine-h" className="sr-only">
-            Đơn hàng của bạn
+        <section aria-labelledby="results-h">
+          <h2 id="results-h" className="sr-only">
+            Kết quả và đơn đã đặt
           </h2>
           <p role="status" className="success">
             {notice}
           </p>
-          {orderRefs.length === 0 ? (
-            <div className="panel empty-orders">
-              <p>Chưa có đơn nào trên trình duyệt này. Sau khi đặt hàng hoặc tra cứu thành công, đơn sẽ hiện ở đây.</p>
-              <Link className="btn btn-secondary" to="/products">
-                Xem sản phẩm
-              </Link>
+
+          {foundOrder && (
+            <div className="order-group">
+              <h2 className="group-title">Kết quả tra cứu</h2>
+              {renderOrder(foundOrder)}
             </div>
-          ) : loading && Object.keys(orders).length === 0 ? (
-            <p role="status">Đang tải đơn hàng…</p>
-          ) : (
-            <div className="order-stack">
-              {orderRefs.map((r) => {
-                const order = orders[r.code];
-                if (!order) {
-                  return (
+          )}
+
+          {savedRefs.length > 0 ? (
+            <div className="order-group">
+              <div className="group-head">
+                <div>
+                  <h2 className="group-title">Đơn đã đặt trên trình duyệt này</h2>
+                  <p className="small muted">Chỉ hiện trên thiết bị này để bạn tiện theo dõi. Người khác muốn xem đơn của bạn vẫn cần mã đơn và số điện thoại.</p>
+                </div>
+                <button type="button" className="btn btn-secondary" onClick={forget}>
+                  Xóa danh sách này
+                </button>
+              </div>
+              {loading && savedRefs.some((r) => !orders[r.code] && !loadErrors[r.code]) && <p role="status">Đang tải đơn hàng…</p>}
+              <div className="order-stack">
+                {savedRefs.map((r) =>
+                  orders[r.code] ? (
+                    renderOrder(orders[r.code])
+                  ) : loadErrors[r.code] ? (
                     <div key={r.code} className="panel" role="alert">
                       <p className="order-code">{r.code}</p>
-                      <p className="error">{loadErrors[r.code] ?? 'Đang tải…'}</p>
+                      <p className="error">{loadErrors[r.code]}</p>
                     </div>
-                  );
-                }
-                return (
-                  <OrderDetails key={r.code} order={order}>
-                    {order.status === 'pending' && (
-                      <div className="order-actions">
-                        {confirming === order.code ? (
-                          <div role="group" aria-label="Xác nhận hủy đơn" className="confirm-cancel">
-                            <p>Bạn chắc chắn muốn hủy đơn {order.code}? Hàng sẽ được trả lại kho và không thể hoàn tác.</p>
-                            <button type="button" className="btn btn-danger" disabled={cancelBusy} onClick={() => cancel(order)}>
-                              {cancelBusy ? 'Đang hủy…' : 'Xác nhận hủy đơn'}
-                            </button>{' '}
-                            <button type="button" className="btn btn-secondary" disabled={cancelBusy} onClick={() => setConfirming(null)}>
-                              Giữ đơn
-                            </button>
-                            {cancelError && (
-                              <p role="alert" className="error">
-                                {cancelError}
-                              </p>
-                            )}
-                          </div>
-                        ) : (
-                          <button
-                            type="button"
-                            className="btn btn-secondary"
-                            onClick={() => {
-                              setConfirming(order.code);
-                              setCancelError(null);
-                            }}
-                          >
-                            Hủy đơn
-                          </button>
-                        )}
-                        <p className="small muted">Bạn tự hủy được khi shop chưa liên hệ xác nhận đơn.</p>
-                      </div>
-                    )}
-                    {order.status !== 'pending' && order.status !== 'cancelled' && order.status !== 'completed' && (
-                      <p className="small muted">Cần thay đổi đơn đã xác nhận? Liên hệ cửa hàng kèm mã đơn {order.code}.</p>
-                    )}
-                  </OrderDetails>
-                );
-              })}
+                  ) : null,
+                )}
+              </div>
             </div>
+          ) : (
+            !foundOrder && (
+              <div className="panel empty-orders">
+                <p>Bạn chưa có đơn nào trên trình duyệt này. Nhập mã đơn và số điện thoại ở bên cạnh để xem đơn, hoặc đặt hàng mới.</p>
+                <Link className="btn btn-secondary" to="/products">
+                  Xem sản phẩm
+                </Link>
+              </div>
+            )
           )}
         </section>
       </div>

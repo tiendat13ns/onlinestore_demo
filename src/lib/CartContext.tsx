@@ -25,6 +25,8 @@ interface CartApi {
   orderRefs: OrderRef[];
   /** Nhớ thêm một đơn tra cứu thành công để lần sau tự hiện. */
   rememberOrder: (ref: OrderRef) => void;
+  /** Xóa danh sách đơn đã nhớ trên trình duyệt này (không ảnh hưởng đơn trên máy chủ). */
+  forgetOrders: () => void;
   addItem: (variantId: string, quantity: number) => AddResult;
   setQuantity: (variantId: string, quantity: number) => void;
   removeLine: (variantId: string) => void;
@@ -132,6 +134,13 @@ export function CartProvider({ children }: { children: ReactNode }) {
     setOrderRefs((prev) => [ref, ...prev.filter((r) => r.code !== ref.code)]);
   }, []);
 
+  const forgetOrders = useCallback(() => {
+    removeItem(CODES_KEY);
+    removeItem(ORDER_KEY);
+    setOrderRefs([]);
+    setOrder(null);
+  }, []);
+
   const clearLocalData = useCallback(() => {
     removeItem(LINES_KEY);
     removeItem(ORDER_KEY);
@@ -144,8 +153,8 @@ export function CartProvider({ children }: { children: ReactNode }) {
   const count = useMemo(() => lines.reduce((sum, l) => sum + l.quantity, 0), [lines]);
 
   const value = useMemo(
-    () => ({ lines, count, persistent, order, orderRefs, rememberOrder, addItem, setQuantity, removeLine, clearLines, saveOrder, clearLocalData }),
-    [lines, count, persistent, order, orderRefs, rememberOrder, addItem, setQuantity, removeLine, clearLines, saveOrder, clearLocalData],
+    () => ({ lines, count, persistent, order, orderRefs, rememberOrder, forgetOrders, addItem, setQuantity, removeLine, clearLines, saveOrder, clearLocalData }),
+    [lines, count, persistent, order, orderRefs, rememberOrder, forgetOrders, addItem, setQuantity, removeLine, clearLines, saveOrder, clearLocalData],
   );
   return <CartContext.Provider value={value}>{children}</CartContext.Provider>;
 }
