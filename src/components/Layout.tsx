@@ -54,8 +54,16 @@ export default function Layout() {
       <footer className="site-footer">
         <div className="footer-grid wrap">
           <div className="footer-about">
-            <p className="footer-brand">{BRAND_NAME}</p>
+            <p className="footer-brand">
+              <img src="/favicon.png" alt="" width="44" height="44" />
+              <span>{BRAND_NAME}</span>
+            </p>
             <p>Deskmat và phụ kiện quản lý dây tối giản cho góc bàn gọn gàng.</p>
+            <ul className="footer-chips" aria-label="Cam kết của cửa hàng">
+              <li>Thanh toán khi nhận hàng</li>
+              <li>Giao 2–5 ngày làm việc</li>
+              <li>Đổi trả trong 7 ngày</li>
+            </ul>
           </div>
           <nav aria-label="Cửa hàng">
             <h2>Cửa hàng</h2>

@@ -1,6 +1,10 @@
 import type { ReactNode } from 'react';
+import { useCatalog } from '../lib/CatalogContext';
 import { formatDateTime, formatMoney } from '../lib/money';
+import { imageForVariant } from '../lib/variantImage';
 import { STATUS_LABELS, STATUS_NOTES, type Order, type OrderStatus } from '../types';
+import { artFor } from './art';
+import ProductImage from './ProductImage';
 import Totals from './Totals';
 
 const STEPS: OrderStatus[] = ['pending', 'confirmed', 'shipping', 'completed'];
@@ -23,6 +27,7 @@ export function OrderProgress({ status }: { status: OrderStatus }) {
 
 /** Thẻ chi tiết một đơn hàng: mã, thời gian, tiến trình, sản phẩm, tiền, thông tin nhận hàng. */
 export default function OrderDetails({ order, children }: { order: Order; children?: ReactNode }) {
+  const { variants } = useCatalog();
   return (
     <article className="order-card" aria-label={`Đơn hàng ${order.code}`}>
       <header className="order-head">
@@ -45,23 +50,31 @@ export default function OrderDetails({ order, children }: { order: Order; childr
           </tr>
         </thead>
         <tbody>
-          {order.lines.map((l) => (
-            <tr key={l.variantId}>
-              <td>
-                {l.name}
-                <span className="small muted"> · {formatMoney(l.unitPrice, order.currency)}</span>
-                {l.components.length > 0 && (
-                  <ul className="small">
-                    {l.components.map((c) => (
-                      <li key={c}>{c}</li>
-                    ))}
-                  </ul>
-                )}
-              </td>
-              <td>{l.quantity}</td>
-              <td>{formatMoney(l.lineTotal, order.currency)}</td>
-            </tr>
-          ))}
+          {order.lines.map((l) => {
+            const entry = variants.get(l.variantId);
+            return (
+              <tr key={l.variantId}>
+                <td>
+                  <div className="line-cell">
+                    {entry && <ProductImage image={imageForVariant(entry.product, entry.variant)} art={artFor(entry.product, entry.variant)} className="line-thumb" />}
+                    <div>
+                      {l.name}
+                      <span className="small muted"> · {formatMoney(l.unitPrice, order.currency)}</span>
+                      {l.components.length > 0 && (
+                        <ul className="small">
+                          {l.components.map((c) => (
+                            <li key={c}>{c}</li>
+                          ))}
+                        </ul>
+                      )}
+                    </div>
+                  </div>
+                </td>
+                <td>{l.quantity}</td>
+                <td>{formatMoney(l.lineTotal, order.currency)}</td>
+              </tr>
+            );
+          })}
         </tbody>
       </table>
 

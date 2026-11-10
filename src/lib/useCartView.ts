@@ -2,6 +2,7 @@ import { useMemo } from 'react';
 import type { Product, ProductImage, Variant } from '../types';
 import { useCart } from './CartContext';
 import { displayName, useCatalog } from './CatalogContext';
+import { imageForVariant } from './variantImage';
 
 export interface CartLineView {
   variantId: string;
@@ -49,7 +50,7 @@ export function useCartView() {
         product,
         variant,
         name: displayName(product, variant),
-        image: variant.image ?? product.images[0],
+        image: variant.image ?? imageForVariant(product, variant),
         unitPrice: variant.price,
         lineTotal: hasPrice ? variant.price! * line.quantity : null,
         components,

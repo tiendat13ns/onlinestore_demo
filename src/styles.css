@@ -599,3 +599,46 @@ input[aria-invalid='true'], textarea[aria-invalid='true'] { border: 2px solid va
 .lookup-band-form .btn { margin-top: 1.75rem; }
 @media (max-width: 899px) { .lookup-band { grid-template-columns: 1fr; } }
 @media (max-width: 599px) { .lookup-band-form { grid-template-columns: 1fr; } .lookup-band-form .btn { margin-top: 0; } }
+
+/* Trang sau đặt hàng: thẻ thành công, hành trình đơn, ảnh sản phẩm trong đơn */
+.success-card { grid-template-columns: 1fr auto; align-items: center; justify-items: stretch; gap: clamp(1rem, 3vw, 3rem); }
+.success-main { display: grid; justify-items: start; gap: 0.5rem; }
+.success-mascot { width: clamp(120px, 16vw, 200px); height: auto; aspect-ratio: 1; border-radius: 50%; justify-self: center; }
+.success-card.empty .confirm-actions { margin-top: 0.5rem; }
+.code-box { background: var(--paper); }
+.steps { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(4, 1fr); gap: var(--gutter); }
+.step { display: grid; gap: 0.5rem; align-content: start; padding: 1.25rem; border-radius: var(--radius); background: var(--paper); }
+.step strong { font-weight: 500; }
+.step .small { color: var(--muted); }
+.step-icon { display: grid; place-items: center; width: 44px; height: 44px; border-radius: 50%; background: var(--surface); color: var(--accent); }
+.step.done .step-icon { background: var(--accent); color: #fff; }
+.line-cell { display: flex; align-items: flex-start; gap: 0.75rem; }
+.line-thumb, .line-thumb img { width: 52px; height: 52px; border-radius: var(--radius-sm); object-fit: cover; flex: none; }
+.line-thumb.art-frame, .line-thumb.img-fallback { aspect-ratio: 1; }
+@media (max-width: 1023px) { .steps { grid-template-columns: repeat(2, 1fr); } }
+@media (max-width: 699px) { .success-card { grid-template-columns: 1fr; } .success-mascot { order: -1; justify-self: start; width: 96px; } }
+@media (max-width: 479px) { .steps { grid-template-columns: 1fr; } }
+
+/* Chân trang */
+.footer-brand { display: flex; align-items: center; gap: 0.75rem; }
+.footer-brand img { width: 44px; height: 44px; border-radius: 50%; flex: none; }
+.footer-chips { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-top: 1rem; }
+.footer-chips li { padding: 0.35rem 0.9rem; border-radius: 999px; background: rgba(255, 255, 255, 0.1); font-size: var(--step-small); }
+
+/* Màn hình rộng hoặc thu nhỏ trang: header và chân trang cũng nằm trong cột 1440px căn giữa cùng nội dung. */
+@media (min-width: 1441px) {
+  .site-header { max-width: 1440px; margin-inline: auto; border-radius: 0 0 var(--radius) var(--radius); }
+  .site-footer { max-width: 1440px; margin-inline: auto; margin-bottom: 1.5rem; border-radius: 28px; }
+}
+
+/* Điện thoại: mỗi sản phẩm trong đơn là một khối (tên rộng hết cỡ, số lượng và thành tiền bên dưới). */
+@media (max-width: 599px) {
+  .order-lines thead { display: none; }
+  .order-lines, .order-lines tbody { display: block; }
+  .order-lines tr { display: grid; grid-template-columns: 1fr auto; gap: 0.35rem 0.75rem; padding: 0.85rem 0; border-bottom: 1px solid var(--line); }
+  .order-lines td, .order-lines th { display: block; padding: 0; border: 0; }
+  .order-lines td:first-child { grid-column: 1 / -1; }
+  .order-lines td:nth-child(2) { width: auto; text-align: left; color: var(--muted); font-size: var(--step-small); }
+  .order-lines td:nth-child(2)::before { content: 'Số lượng: '; }
+  .order-lines td:last-child { text-align: right; font-weight: 500; }
+}
