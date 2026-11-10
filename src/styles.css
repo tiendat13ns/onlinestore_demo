@@ -70,7 +70,8 @@ ul { padding-left: 1.2em; }
 :focus-visible { outline: 3px solid var(--ink); outline-offset: 3px; }
 
 .container { width: min(1280px, 100% - 2 * var(--margin)); margin-inline: auto; padding-bottom: 6rem; }
-.main-full { width: 100%; }
+/* Trang chủ: nội dung nằm trong một cột căn giữa tối đa 1440px; chỉ thanh thông báo, header và chân trang trải hết bề ngang. */
+.main-full { width: 100%; max-width: 1440px; margin-inline: auto; }
 
 .skip-link { position: absolute; left: -9999px; top: 0; background: var(--ink); color: #fff; padding: 0.6rem 1rem; z-index: 100; }
 .skip-link:focus { left: 0; }
@@ -564,3 +565,6 @@ input[aria-invalid='true'], textarea[aria-invalid='true'] { border: 2px solid va
 @media (max-width: 899px) { .orders-layout { grid-template-columns: 1fr; } .lookup-card { position: static; } }
 @media (max-width: 479px) { .progress { grid-template-columns: repeat(2, 1fr); row-gap: 0.9rem; } .order-ship { grid-template-columns: 1fr; } .sum-item { grid-template-columns: 56px 1fr; } .sum-price { grid-column: 2; } }
 .order-note { padding: 0.75rem 1rem; border-radius: var(--radius-sm); background: var(--surface); }
+
+/* Màn hình rất rộng hoặc khi thu nhỏ trang: banner thành một khối bo góc giữa cột, không kéo giãn theo màn hình. */
+@media (min-width: 1441px) { .hero { margin-top: 0.75rem; border-radius: var(--radius); overflow: hidden; } }
