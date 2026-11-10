@@ -53,7 +53,8 @@ export const api = {
   catalog: () => request<Catalog>('/api/catalog'),
   createOrder: (lines: { variantId: string; quantity: number }[], customer: Customer) =>
     request<Order>('/api/orders', { method: 'POST', body: json({ lines, customer }) }),
-  getOrder: (code: string) => request<Order>(`/api/orders/${encodeURIComponent(code)}`),
+  lookupOrder: (code: string, phone: string) => request<Order>('/api/orders/lookup', { method: 'POST', body: json({ code, phone }) }),
+  cancelOrder: (code: string, phone: string) => request<Order>('/api/orders/cancel', { method: 'POST', body: json({ code, phone }) }),
 
   admin: {
     login: (password: string) => request<{ token: string }>('/api/admin/login', { method: 'POST', body: json({ password }) }),

@@ -1,80 +1,109 @@
+import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import Totals from '../components/Totals';
+import OrderDetails from '../components/OrderDetails';
 import { useCart } from '../lib/CartContext';
-import { formatDateTime, formatMoney } from '../lib/money';
 import { useTitle } from '../lib/useTitle';
-import { STATUS_LABELS } from '../types';
 
 export default function Confirmation() {
   const { order } = useCart();
+  const [copied, setCopied] = useState<'ok' | 'fail' | null>(null);
   useTitle('Đặt hàng thành công');
 
   if (!order) {
     return (
       <>
         <h1>Đơn hàng</h1>
-        <p>Chưa có đơn hàng nào trong phiên này.</p>
-        <Link className="btn" to="/products">
-          Xem sản phẩm
-        </Link>
+        <p>Chưa có đơn hàng nào trong phiên này. Nếu bạn đã đặt hàng, hãy tra cứu bằng mã đơn và số điện thoại.</p>
+        <p>
+          <Link className="btn" to="/orders">
+            Tra cứu đơn hàng
+          </Link>{' '}
+          <Link className="btn btn-secondary" to="/products">
+            Xem sản phẩm
+          </Link>
+        </p>
       </>
     );
   }
 
+  const copy = async () => {
+    try {
+      await navigator.clipboard.writeText(order.code);
+      setCopied('ok');
+      return;
+    } catch {
+      // Trình duyệt chặn clipboard (trang không bảo mật, chưa cấp quyền): thử cách cũ.
+    }
+    try {
+      const box = document.createElement('textarea');
+      box.value = order.code;
+      box.setAttribute('readonly', '');
+      box.style.position = 'fixed';
+      box.style.opacity = '0';
+      document.body.appendChild(box);
+      box.select();
+      const ok = document.execCommand('copy');
+      document.body.removeChild(box);
+      setCopied(ok ? 'ok' : 'fail');
+    } catch {
+      setCopied('fail');
+    }
+  };
+
   return (
-    <>
-      <h1>Đặt hàng thành công</h1>
-      <p className="lead">
-        Cảm ơn {order.customerName ? `${order.customerName}, ` : 'bạn '}đã đặt hàng. Hãy giữ lại mã đơn để tra cứu sau này.
-      </p>
-      <p>
-        Mã đơn: <strong>{order.code}</strong>
-        <br />
-        Trạng thái: {STATUS_LABELS[order.status]}
-        <br />
-        Thời gian đặt: {formatDateTime(order.createdAt)}
-      </p>
+    <div className="confirm">
+      <section className="success-card" aria-labelledby="done-h">
+        <svg className="success-mark" width="56" height="56" viewBox="0 0 56 56" aria-hidden="true">
+          <circle cx="28" cy="28" r="28" fill="currentColor" />
+          <path d="m17 29 8 8 15-17" fill="none" stroke="#fff" strokeWidth="4.5" strokeLinecap="round" strokeLinejoin="round" />
+        </svg>
+        <h1 id="done-h">Đặt hàng thành công</h1>
+        <p className="lead">
+          Cảm ơn {order.customerName ? `${order.customerName} ` : 'bạn '}đã đặt hàng. Chúng tôi sẽ liên hệ qua số {order.customerPhone ?? 'điện thoại bạn đã nhập'} để xác nhận đơn.
+        </p>
 
-      <table>
-        <thead>
-          <tr>
-            <th scope="col">Sản phẩm</th>
-            <th scope="col">Số lượng</th>
-            <th scope="col">Đơn giá</th>
-            <th scope="col">Thành tiền</th>
-          </tr>
-        </thead>
-        <tbody>
-          {order.lines.map((l) => (
-            <tr key={l.variantId}>
-              <td>
-                {l.name}
-                {l.components.length > 0 && (
-                  <ul className="small">
-                    {l.components.map((c) => (
-                      <li key={c}>{c}</li>
-                    ))}
-                  </ul>
-                )}
-              </td>
-              <td>{l.quantity}</td>
-              <td>{formatMoney(l.unitPrice, order.currency)}</td>
-              <td>{formatMoney(l.lineTotal, order.currency)}</td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
+        <div className="code-box">
+          <span className="small muted">Mã đơn hàng của bạn</span>
+          <strong className="code">{order.code}</strong>
+          <button type="button" className="btn btn-secondary" onClick={copy}>
+            Sao chép mã
+          </button>
+          <p role="status" className="small">
+            {copied === 'ok' && 'Đã sao chép mã đơn.'}
+            {copied === 'fail' && 'Không sao chép được. Hãy chọn và chép mã thủ công.'}
+          </p>
+        </div>
+        <p className="small muted">Hãy lưu mã đơn. Để tra cứu sau này, bạn cần mã đơn và số điện thoại đã dùng khi đặt hàng.</p>
+      </section>
 
-      <Totals subtotal={order.subtotal} currency={order.currency} />
+      <section aria-labelledby="next-h">
+        <h2 id="next-h">Tiếp theo</h2>
+        <ol className="next-steps">
+          <li>
+            <strong>Xác nhận đơn.</strong> Cửa hàng xử lý trong 1–2 ngày làm việc và thông báo phí vận chuyển.
+          </li>
+          <li>
+            <strong>Giao hàng.</strong> Nhận hàng trong 2–5 ngày làm việc tùy khu vực.
+          </li>
+          <li>
+            <strong>Thanh toán khi nhận hàng.</strong> Kiểm tra sản phẩm rồi mới trả tiền.
+          </li>
+        </ol>
+      </section>
 
-      <p>
-        <Link className="btn" to="/products">
-          Tiếp tục mua sắm
+      <section aria-labelledby="detail-h">
+        <h2 id="detail-h">Chi tiết đơn hàng</h2>
+        <OrderDetails order={order} />
+      </section>
+
+      <p className="confirm-actions">
+        <Link className="btn" to={`/orders?code=${encodeURIComponent(order.code)}`}>
+          Theo dõi đơn hàng
         </Link>{' '}
-        <Link className="btn btn-secondary" to="/orders">
-          Đơn hàng của tôi
+        <Link className="btn btn-secondary" to="/products">
+          Tiếp tục mua sắm
         </Link>
       </p>
-    </>
+    </div>
   );
 }

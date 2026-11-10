@@ -1,89 +1,252 @@
-import { useEffect, useState, type FormEvent } from 'react';
-import { Link } from 'react-router-dom';
+import { useEffect, useRef, useState, type FormEvent } from 'react';
+import { Link, useSearchParams } from 'react-router-dom';
+import OrderDetails from '../components/OrderDetails';
 import { ApiError, api } from '../lib/api';
 import { useCart } from '../lib/CartContext';
-import { formatDateTime, formatMoney } from '../lib/money';
+import { normalizeOrderCode, normalizePhone } from '../lib/normalize';
 import { useTitle } from '../lib/useTitle';
-import { STATUS_LABELS, type Order } from '../types';
+import type { Order } from '../types';
 
-type Result = { order: Order } | { code: string; error: string };
-
-async function fetchOne(code: string): Promise<Result> {
-  try {
-    return { order: await api.getOrder(code) };
-  } catch (err) {
-    return { code, error: err instanceof ApiError ? err.message : 'Không tải được đơn.' };
-  }
-}
+const message = (err: unknown) => (err instanceof ApiError ? err.message : 'Chưa thể kết nối. Vui lòng thử lại.');
 
 export default function Orders() {
-  useTitle('Đơn hàng của bạn');
-  const { orderCodes } = useCart();
-  const [results, setResults] = useState<Result[] | null>(null);
-  const [lookup, setLookup] = useState('');
-  const [found, setFound] = useState<Result | null>(null);
+  useTitle('Tra cứu đơn hàng');
+  const { orderRefs, rememberOrder } = useCart();
+  const [params] = useSearchParams();
 
-  // Tải lại trạng thái mới nhất từ server cho các đơn trình duyệt đã nhớ.
+  const [orders, setOrders] = useState<Record<string, Order>>({});
+  const [loadErrors, setLoadErrors] = useState<Record<string, string>>({});
+  const [loading, setLoading] = useState(orderRefs.length > 0);
+
+  const [code, setCode] = useState(params.get('code') ?? '');
+  const [phone, setPhone] = useState('');
+  const [errors, setErrors] = useState<{ code?: string; phone?: string; form?: string }>({});
+  const [busy, setBusy] = useState(false);
+  const [notice, setNotice] = useState<string | null>(null);
+
+  const [confirming, setConfirming] = useState<string | null>(null);
+  const [cancelBusy, setCancelBusy] = useState(false);
+  const [cancelError, setCancelError] = useState<string | null>(null);
+  const codeInput = useRef<HTMLInputElement>(null);
+  const phoneInput = useRef<HTMLInputElement>(null);
+
+  // Tải trạng thái mới nhất của các đơn đã đặt trên trình duyệt này (chỉ những đơn chưa tải).
   useEffect(() => {
+    const missing = orderRefs.filter((r) => !orders[r.code] && !loadErrors[r.code]);
+    if (missing.length === 0) {
+      setLoading(false);
+      return;
+    }
     let cancelled = false;
-    Promise.all(orderCodes.map(fetchOne)).then((r) => !cancelled && setResults(r));
+    setLoading(true);
+    Promise.all(
+      missing.map(async (r): Promise<{ code: string; order: Order } | { code: string; error: string }> => {
+        try {
+          return { code: r.code, order: await api.lookupOrder(r.code, r.phone) };
+        } catch (err) {
+          return { code: r.code, error: message(err) };
+        }
+      }),
+    ).then((results) => {
+      if (cancelled) return;
+      const loaded: Record<string, Order> = {};
+      const failed: Record<string, string> = {};
+      for (const r of results) {
+        if ('order' in r) loaded[r.code] = r.order;
+        else failed[r.code] = r.error;
+      }
+      setOrders((prev) => ({ ...prev, ...loaded }));
+      setLoadErrors((prev) => ({ ...prev, ...failed }));
+      setLoading(false);
+    });
     return () => {
       cancelled = true;
     };
-  }, [orderCodes]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [orderRefs]);
 
   const onLookup = async (e: FormEvent) => {
     e.preventDefault();
-    const code = lookup.trim();
-    if (code) setFound(await fetchOne(code));
+    setNotice(null);
+    const next: typeof errors = {};
+    if (!code.trim()) next.code = 'Vui lòng nhập mã đơn hàng.';
+    if (!phone.trim()) next.phone = 'Vui lòng nhập số điện thoại đã dùng khi đặt hàng.';
+    else if (!normalizePhone(phone)) next.phone = 'Số điện thoại chưa đúng. Ví dụ: 0901234567.';
+    setErrors(next);
+    if (next.code || next.phone) {
+      (next.code ? codeInput : phoneInput).current?.focus();
+      return;
+    }
+
+    setBusy(true);
+    try {
+      const order = await api.lookupOrder(normalizeOrderCode(code), phone);
+      setOrders((prev) => ({ ...prev, [order.code]: order }));
+      setLoadErrors(({ [order.code]: _, ...rest }) => rest);
+      rememberOrder({ code: order.code, phone: order.customerPhone ?? normalizePhone(phone) ?? phone });
+      setNotice(`Đã tìm thấy đơn ${order.code}.`);
+      setCode('');
+      setPhone('');
+    } catch (err) {
+      setErrors({ form: message(err) });
+    } finally {
+      setBusy(false);
+    }
   };
 
-  const render = (r: Result) =>
-    'order' in r ? (
-      <li key={r.order.code} className="order-row">
-        <strong>{r.order.code}</strong> · {STATUS_LABELS[r.order.status]}
-        <br />
-        <span className="small muted">
-          {formatDateTime(r.order.createdAt)} · {formatMoney(r.order.subtotal, r.order.currency)}
-        </span>
-        <ul className="small">
-          {r.order.lines.map((l) => (
-            <li key={l.variantId}>
-              {l.name} × {l.quantity}
-            </li>
-          ))}
-        </ul>
-      </li>
-    ) : (
-      <li key={r.code} role="alert" className="error">
-        {r.code}: {r.error}
-      </li>
-    );
+  const cancel = async (order: Order) => {
+    if (!order.customerPhone) return;
+    setCancelBusy(true);
+    setCancelError(null);
+    try {
+      const updated = await api.cancelOrder(order.code, order.customerPhone);
+      setOrders((prev) => ({ ...prev, [updated.code]: updated }));
+      setConfirming(null);
+      setNotice(`Đã hủy đơn ${updated.code}. Hàng đã được trả lại kho.`);
+    } catch (err) {
+      setCancelError(message(err));
+    } finally {
+      setCancelBusy(false);
+    }
+  };
 
   return (
     <>
-      <h1>Đơn hàng của bạn</h1>
-      <p className="lead">Các đơn bạn đã đặt trên trình duyệt này.</p>
+      <h1>Tra cứu đơn hàng</h1>
+      <p className="lead">Nhập mã đơn và số điện thoại bạn đã dùng khi đặt hàng để xem trạng thái.</p>
 
-      {orderCodes.length === 0 ? (
-        <p>
-          Bạn chưa có đơn hàng nào. <Link to="/products">Xem sản phẩm</Link>
-        </p>
-      ) : results === null ? (
-        <p role="status">Đang tải…</p>
-      ) : (
-        <ul className="order-list">{results.map(render)}</ul>
-      )}
+      <div className="orders-layout">
+        <form onSubmit={onLookup} noValidate className="panel lookup-card" aria-labelledby="lookup-h">
+          <h2 id="lookup-h">Tìm đơn của bạn</h2>
+          <div className="field">
+            <label htmlFor="lookup-code">Mã đơn hàng</label>
+            <input
+              id="lookup-code"
+              ref={codeInput}
+              type="text"
+              autoComplete="off"
+              autoCapitalize="characters"
+              placeholder="OD-1A2B3C4D"
+              value={code}
+              aria-invalid={errors.code !== undefined}
+              aria-describedby={errors.code ? 'lookup-code-error' : undefined}
+              onChange={(e) => {
+                setCode(e.target.value);
+                setErrors((x) => ({ ...x, code: undefined, form: undefined }));
+              }}
+            />
+            {errors.code && (
+              <p id="lookup-code-error" role="alert" className="error">
+                {errors.code}
+              </p>
+            )}
+          </div>
+          <div className="field">
+            <label htmlFor="lookup-phone">Số điện thoại đặt hàng</label>
+            <input
+              id="lookup-phone"
+              ref={phoneInput}
+              type="tel"
+              inputMode="tel"
+              autoComplete="tel"
+              placeholder="0901234567"
+              value={phone}
+              aria-invalid={errors.phone !== undefined}
+              aria-describedby={errors.phone ? 'lookup-phone-error' : undefined}
+              onChange={(e) => {
+                setPhone(e.target.value);
+                setErrors((x) => ({ ...x, phone: undefined, form: undefined }));
+              }}
+            />
+            {errors.phone && (
+              <p id="lookup-phone-error" role="alert" className="error">
+                {errors.phone}
+              </p>
+            )}
+          </div>
+          {errors.form && (
+            <p role="alert" className="error">
+              {errors.form}
+            </p>
+          )}
+          <button type="submit" className="btn" disabled={busy}>
+            {busy ? 'Đang tìm…' : 'Tra cứu'}
+          </button>
+          <p className="small muted">Mã đơn có dạng OD-XXXXXXXX và được hiển thị khi đặt hàng thành công.</p>
+        </form>
 
-      <h2>Tra cứu theo mã đơn</h2>
-      <form onSubmit={onLookup} className="lookup">
-        <label htmlFor="lookup-code">Mã đơn hàng</label>
-        <input id="lookup-code" type="text" value={lookup} onChange={(e) => setLookup(e.target.value)} />
-        <button type="submit" className="btn">
-          Tra cứu
-        </button>
-      </form>
-      {found && <ul className="order-list">{render(found)}</ul>}
+        <section aria-labelledby="mine-h">
+          <h2 id="mine-h" className="sr-only">
+            Đơn hàng của bạn
+          </h2>
+          <p role="status" className="success">
+            {notice}
+          </p>
+          {orderRefs.length === 0 ? (
+            <div className="panel empty-orders">
+              <p>Chưa có đơn nào trên trình duyệt này. Sau khi đặt hàng hoặc tra cứu thành công, đơn sẽ hiện ở đây.</p>
+              <Link className="btn btn-secondary" to="/products">
+                Xem sản phẩm
+              </Link>
+            </div>
+          ) : loading && Object.keys(orders).length === 0 ? (
+            <p role="status">Đang tải đơn hàng…</p>
+          ) : (
+            <div className="order-stack">
+              {orderRefs.map((r) => {
+                const order = orders[r.code];
+                if (!order) {
+                  return (
+                    <div key={r.code} className="panel" role="alert">
+                      <p className="order-code">{r.code}</p>
+                      <p className="error">{loadErrors[r.code] ?? 'Đang tải…'}</p>
+                    </div>
+                  );
+                }
+                return (
+                  <OrderDetails key={r.code} order={order}>
+                    {order.status === 'pending' && (
+                      <div className="order-actions">
+                        {confirming === order.code ? (
+                          <div role="group" aria-label="Xác nhận hủy đơn" className="confirm-cancel">
+                            <p>Bạn chắc chắn muốn hủy đơn {order.code}? Hàng sẽ được trả lại kho và không thể hoàn tác.</p>
+                            <button type="button" className="btn btn-danger" disabled={cancelBusy} onClick={() => cancel(order)}>
+                              {cancelBusy ? 'Đang hủy…' : 'Xác nhận hủy đơn'}
+                            </button>{' '}
+                            <button type="button" className="btn btn-secondary" disabled={cancelBusy} onClick={() => setConfirming(null)}>
+                              Giữ đơn
+                            </button>
+                            {cancelError && (
+                              <p role="alert" className="error">
+                                {cancelError}
+                              </p>
+                            )}
+                          </div>
+                        ) : (
+                          <button
+                            type="button"
+                            className="btn btn-secondary"
+                            onClick={() => {
+                              setConfirming(order.code);
+                              setCancelError(null);
+                            }}
+                          >
+                            Hủy đơn
+                          </button>
+                        )}
+                        <p className="small muted">Bạn chỉ tự hủy được khi đơn còn "Chờ xác nhận".</p>
+                      </div>
+                    )}
+                    {order.status !== 'pending' && order.status !== 'cancelled' && order.status !== 'completed' && (
+                      <p className="small muted">Cần thay đổi đơn đã xác nhận? Liên hệ cửa hàng kèm mã đơn {order.code}.</p>
+                    )}
+                  </OrderDetails>
+                );
+              })}
+            </div>
+          )}
+        </section>
+      </div>
     </>
   );
 }

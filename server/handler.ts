@@ -1,6 +1,6 @@
 import { checkPassword, issueToken, requireAdmin } from './auth';
 import { HttpError } from './errors';
-import { adminProducts, changeStatus, createOrder, findOrder, listOrders, publicCatalog, updateVariant } from './store';
+import { adminProducts, cancelOrder, changeStatus, createOrder, listOrders, lookupOrder, publicCatalog, updateVariant } from './store';
 
 export interface ApiRequest {
   method: string;
@@ -39,10 +39,14 @@ async function route(req: ApiRequest): Promise<ApiResponse> {
 
   if (method === 'POST' && path === '/orders') return { status: 201, body: await createOrder(parseBody(req.body)) };
 
-  if (method === 'GET' && (m = path.match(/^\/orders\/([^/]+)$/))) {
-    const order = await findOrder(decodeURIComponent(m[1]).toUpperCase());
-    if (!order) throw new HttpError(404, 'Không tìm thấy đơn.');
-    return { status: 200, body: order };
+  // Tra cứu và hủy đơn của khách: dùng POST để mã đơn và số điện thoại không nằm trên URL/nhật ký máy chủ.
+  if (method === 'POST' && path === '/orders/lookup') {
+    const b = parseBody(req.body);
+    return { status: 200, body: await lookupOrder(b.code, b.phone) };
+  }
+  if (method === 'POST' && path === '/orders/cancel') {
+    const b = parseBody(req.body);
+    return { status: 200, body: await cancelOrder(b.code, b.phone) };
   }
 
   if (method === 'POST' && path === '/admin/login') {

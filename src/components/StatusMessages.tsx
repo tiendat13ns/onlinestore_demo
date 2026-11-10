@@ -13,10 +13,34 @@ export function NotFoundMessage({ what = 'trang' }: { what?: string }) {
   );
 }
 
-/** Bọc nội dung phụ thuộc catalog: hiển thị trạng thái tải/lỗi trước khi render children. */
-export function CatalogGate({ children }: { children: React.ReactNode }) {
+/** Khung xương hiện trong lúc chờ catalog lần đầu: cùng hình dáng với dải sản phẩm để trang không giật. */
+export function ProductSkeleton({ rows = 1 }: { rows?: number }) {
+  return (
+    <div className="skeleton" role="status" aria-busy="true">
+      <span className="sr-only">Đang tải sản phẩm…</span>
+      {Array.from({ length: rows }, (_, r) => (
+        <div key={r} className="skeleton-row" aria-hidden="true">
+          <div className="sk sk-title" />
+          <div className="skeleton-grid">
+            {Array.from({ length: 4 }, (_, i) => (
+              <div key={i} className="skeleton-card">
+                <div className="sk sk-img" />
+                <div className="sk sk-line sk-short" />
+                <div className="sk sk-line" />
+                <div className="sk sk-line sk-mid" />
+              </div>
+            ))}
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+/** Bọc nội dung phụ thuộc catalog: khung xương khi đang tải, thông báo khi lỗi. */
+export function CatalogGate({ children, fallback }: { children: React.ReactNode; fallback?: React.ReactNode }) {
   const { status, reload } = useCatalog();
-  if (status === 'loading') return <p role="status">Đang tải sản phẩm…</p>;
+  if (status === 'loading') return <>{fallback ?? <ProductSkeleton />}</>;
   if (status === 'error') {
     return (
       <div role="alert">

@@ -1,6 +1,7 @@
 import { randomBytes } from 'node:crypto';
 import type { BundleComponent, Catalog, Product, ProductImage, Spec, Variant } from '../src/types';
 import { getDb, type Queryable } from './db';
+import { normalizeOrderCode, normalizePhone } from '../src/lib/normalize';
 import { HttpError } from './errors';
 
 interface ProductRow {
@@ -182,8 +183,12 @@ function label(attributes: Record<string, string>): string {
 export async function createOrder(body: unknown) {
   const input = body as { lines?: unknown; customer?: Record<string, unknown> };
   const name = text(input?.customer?.name, 'họ tên', 100);
-  const phone = text(input?.customer?.phone, 'số điện thoại', 30);
+  if (name.length < 2) throw new HttpError(400, 'Họ tên quá ngắn.');
+  // Lưu SĐT ở dạng đã chuẩn hóa để tra cứu đơn so khớp được dù khách gõ +84, dấu cách hay dấu chấm.
+  const phone = normalizePhone(text(input?.customer?.phone, 'số điện thoại', 30));
+  if (!phone) throw new HttpError(400, 'Số điện thoại chưa đúng. Ví dụ: 0901234567.');
   const address = text(input?.customer?.address, 'địa chỉ', 300);
+  if (address.length < 10) throw new HttpError(400, 'Vui lòng nhập địa chỉ đầy đủ (số nhà, đường, phường/xã, tỉnh/thành).');
 
   if (!Array.isArray(input.lines) || input.lines.length === 0 || input.lines.length > 50) {
     throw new HttpError(400, 'Giỏ hàng trống hoặc không hợp lệ.');
@@ -254,16 +259,61 @@ export async function createOrder(body: unknown) {
       );
       lineRows.push(inserted[0]);
     }
-    return toOrder(created[0], lineRows, false);
+    // Người vừa đặt được xem lại thông tin họ đã nhập (địa chỉ, SĐT) ở trang xác nhận.
+    return toOrder(created[0], lineRows, true);
   });
 }
 
-export async function findOrder(code: string, includeContact = false) {
+const NOT_FOUND = 'Không tìm thấy đơn hàng với mã và số điện thoại này.';
+const wait = (ms: number) => new Promise((r) => setTimeout(r, ms));
+
+function phoneMatches(stored: string, given: unknown): boolean {
+  const g = typeof given === 'string' ? normalizePhone(given) : null;
+  return g !== null && normalizePhone(stored) === g;
+}
+
+/**
+ * Tra cứu của khách: phải đúng CẢ mã đơn lẫn số điện thoại đặt hàng.
+ * Sai một trong hai đều trả cùng một thông báo để không ai dò được mã nào tồn tại.
+ */
+export async function lookupOrder(codeRaw: unknown, phoneRaw: unknown) {
+  const code = typeof codeRaw === 'string' ? normalizeOrderCode(codeRaw) : '';
   const db = getDb();
-  const rows = await db.query<OrderRow>('select * from orders where code = $1', [code]);
-  if (!rows[0]) return null;
+  const rows = code ? await db.query<OrderRow>('select * from orders where code = $1', [code]) : [];
+  if (!rows[0] || !phoneMatches(rows[0].customer_phone, phoneRaw)) {
+    await wait(400); // làm chậm việc đoán mã
+    throw new HttpError(404, NOT_FOUND);
+  }
   const lines = await db.query<LineRow>('select * from order_lines where order_code = $1 order by id', [code]);
-  return toOrder(rows[0], lines, includeContact);
+  return toOrder(rows[0], lines, true);
+}
+
+/** Khách tự hủy đơn khi còn "Chờ xác nhận"; hoàn lại tồn kho trong cùng một giao dịch. */
+export async function cancelOrder(codeRaw: unknown, phoneRaw: unknown) {
+  const code = typeof codeRaw === 'string' ? normalizeOrderCode(codeRaw) : '';
+  return getDb().transaction(async (tx) => {
+    const rows = code ? await tx.query<OrderRow>('select * from orders where code = $1 for update', [code]) : [];
+    const row = rows[0];
+    if (!row || !phoneMatches(row.customer_phone, phoneRaw)) {
+      await wait(400);
+      throw new HttpError(404, NOT_FOUND);
+    }
+    if (row.status === 'cancelled') throw new HttpError(409, 'Đơn hàng này đã được hủy trước đó.');
+    if (row.status !== 'pending') {
+      throw new HttpError(409, 'Đơn đã được xác nhận nên không thể tự hủy. Vui lòng liên hệ cửa hàng kèm mã đơn.');
+    }
+    const lines = await tx.query<LineRow>('select * from order_lines where order_code = $1 order by id', [code]);
+    await restock(tx, lines);
+    await tx.query("update orders set status = 'cancelled' where code = $1", [code]);
+    return toOrder({ ...row, status: 'cancelled' }, lines, true);
+  });
+}
+
+/** Hoàn kho theo thứ tự cố định để tránh deadlock với đơn khác. */
+async function restock(tx: Queryable, lines: LineRow[]) {
+  for (const l of [...lines].sort((a, b) => a.variant_id.localeCompare(b.variant_id))) {
+    await tx.query('update variants set stock = stock + $1 where id = $2', [l.quantity, l.variant_id]);
+  }
 }
 
 export async function listOrders() {
@@ -288,10 +338,7 @@ export async function changeStatus(code: string, next: unknown) {
     }
     const lines = await tx.query<LineRow>('select * from order_lines where order_code = $1 order by id', [code]);
     if (next === 'cancelled') {
-      // Hoàn kho theo thứ tự cố định để tránh deadlock với đơn khác.
-      for (const l of [...lines].sort((a, b) => a.variant_id.localeCompare(b.variant_id))) {
-        await tx.query('update variants set stock = stock + $1 where id = $2', [l.quantity, l.variant_id]);
-      }
+      await restock(tx, lines);
     }
     await tx.query('update orders set status = $1 where code = $2', [next, code]);
     return toOrder({ ...row, status: next as OrderStatus }, lines, true);

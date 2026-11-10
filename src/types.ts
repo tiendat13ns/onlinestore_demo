@@ -1,4 +1,4 @@
-export type CategoryId = 'deskmat' | 'cable' | 'bundle';
+export type CategoryId = 'deskmat' | 'cable' | 'accessory' | 'bundle';
 
 export interface CategoryInfo {
   id: CategoryId;
@@ -9,6 +9,7 @@ export interface CategoryInfo {
 export const CATEGORIES: CategoryInfo[] = [
   { id: 'deskmat', label: 'Deskmat', description: 'Tấm lót bàn cho góc làm việc và chơi game.' },
   { id: 'cable', label: 'Quản lý dây', description: 'Phụ kiện giữ dây gọn gàng trên bàn.' },
+  { id: 'accessory', label: 'Phụ kiện bàn', description: 'Kê tay, keycap, giá đỡ và khay để bàn gọn hơn.' },
   { id: 'bundle', label: 'Bộ sản phẩm', description: 'Các bộ phối sẵn để bắt đầu nhanh.' },
 ];
 
@@ -19,6 +20,8 @@ export function isCategory(value: string | null): value is CategoryId {
 export interface ProductImage {
   src?: string;
   alt: string;
+  /** Ảnh dành cho biến thể này (ví dụ { Màu: 'Đen' }, hoặc nhiều giá trị { Loại: ['Be 10 cm', 'Be 20 cm'] }); chọn đúng thuộc tính thì gallery tự chuyển sang ảnh. */
+  match?: Record<string, string | string[]>;
 }
 
 export interface Spec {
@@ -102,6 +105,9 @@ export interface Order {
   lines: OrderLine[];
   subtotal: number;
   customerName?: string;
+  /** Chỉ có khi đã xác thực bằng số điện thoại (người đặt đơn hoặc admin). */
+  customerPhone?: string;
+  customerAddress?: string;
 }
 
 /** Đơn đầy đủ cho admin. */

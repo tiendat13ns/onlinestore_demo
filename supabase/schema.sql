@@ -1,4 +1,4 @@
--- Schema cho Nook Studio. Chạy một lần trong Supabase: SQL Editor > New query > dán toàn bộ file này > Run.
+-- Schema cho Tam Thái Tử Store. Chạy một lần trong Supabase: SQL Editor > New query > dán toàn bộ file này > Run.
 -- Chạy lại được nhiều lần (create if not exists).
 
 create table if not exists settings (

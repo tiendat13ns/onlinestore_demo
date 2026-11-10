@@ -9,8 +9,8 @@ const nullable = (v: string | null) => (v === null ? 'null' : str(v));
 const json = (v: unknown) => `${str(JSON.stringify(v))}::jsonb`;
 
 const out: string[] = [
-  '-- Dữ liệu mẫu cho Nook Studio. SINH TỰ ĐỘNG từ src/data/catalog.ts bằng `npm run db:seed-sql`; đừng sửa tay.',
-  '-- Chạy SAU schema.sql. Chạy lại không ghi đè giá/tồn kho bạn đã chỉnh trong /admin (on conflict do nothing).',
+  '-- Dữ liệu mẫu cho Tam Thái Tử Store. SINH TỰ ĐỘNG từ src/data/catalog.ts bằng `npm run db:seed-sql`; đừng sửa tay.',
+  '-- Chạy SAU schema.sql. Chạy lại an toàn: cập nhật nội dung sản phẩm (tên, mô tả, ảnh, thông số), thêm biến thể mới, nhưng KHÔNG ghi đè giá/tồn kho đã chỉnh trong /admin.',
   '',
 ];
 
@@ -25,7 +25,7 @@ catalog.products.forEach((p, i) => {
       str(p.id), str(p.slug), str(p.name), str(p.category), str(p.kind), str(p.shortDescription), str(p.description),
       nullable(p.usage), p.includes ? json(p.includes) : 'null', json(p.images), json(p.attributeNames), json(p.relatedIds), i,
     ].join(', ')})`,
-    'on conflict (id) do nothing;',
+    `on conflict (id) do update set slug = excluded.slug, name = excluded.name, category = excluded.category, kind = excluded.kind, short_description = excluded.short_description, description = excluded.description, usage = excluded.usage, includes = excluded.includes, images = excluded.images, attribute_names = excluded.attribute_names, related_ids = excluded.related_ids, sort_order = excluded.sort_order;`,
   );
 });
 out.push('');
@@ -38,7 +38,7 @@ catalog.products.forEach((p) => {
         str(v.id), str(p.id), json(v.attributes), v.price === null ? 'null' : v.price, SEED_STOCK, json(v.specs),
         v.components ? json(v.components) : 'null', j,
       ].join(', ')})`,
-      'on conflict (id) do nothing;',
+      'on conflict (id) do update set attributes = excluded.attributes, specs = excluded.specs, components = excluded.components, sort_order = excluded.sort_order;',
     );
   });
 });

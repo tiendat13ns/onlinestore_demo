@@ -29,9 +29,11 @@ export default function ProductCard({ product }: { product: Product }) {
         <p className="clamp-2">{product.shortDescription}</p>
         <p className="price">{priceText(product, catalog.currency)}</p>
         {product.variants.every((v) => v.inStock === false) && <p className="error small">Hết hàng</p>}
-        <Link className="btn btn-secondary" to={to}>
-          Xem chi tiết
-        </Link>
+        <div className="card-actions">
+          <Link className="btn btn-secondary" to={to}>
+            Xem chi tiết
+          </Link>
+        </div>
       </div>
     </article>
   );

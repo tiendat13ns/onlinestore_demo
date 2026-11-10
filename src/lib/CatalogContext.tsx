@@ -1,4 +1,4 @@
-import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
+import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import type { Catalog, Product, Variant } from '../types';
 import { api } from './api';
 
@@ -19,26 +19,57 @@ interface CatalogApi {
 const emptyCatalog: Catalog = { currency: null, products: [] };
 const CatalogContext = createContext<CatalogApi | null>(null);
 
+
+// Nhớ catalog lần trước (dữ liệu công khai) để F5 hoặc mở lại trang hiện ngay, rồi cập nhật ngầm từ máy chủ.
+const CACHE_KEY = 'tt.catalog.v1';
+const CACHE_MAX_AGE = 24 * 60 * 60 * 1000;
+
+function readCache(): Catalog | null {
+  try {
+    const raw = localStorage.getItem(CACHE_KEY);
+    if (!raw) return null;
+    const data = JSON.parse(raw) as { at?: number; catalog?: Catalog };
+    if (!data.catalog?.products?.length || typeof data.at !== 'number' || Date.now() - data.at > CACHE_MAX_AGE) return null;
+    return data.catalog;
+  } catch {
+    return null;
+  }
+}
+
+function writeCache(catalog: Catalog): void {
+  try {
+    localStorage.setItem(CACHE_KEY, JSON.stringify({ at: Date.now(), catalog }));
+  } catch {
+    // storage đầy hoặc bị chặn: bỏ qua, trang vẫn chạy bình thường
+  }
+}
+
 function loadCatalog(): Promise<Catalog> {
   return api.catalog();
 }
 
 export function CatalogProvider({ children }: { children: ReactNode }) {
-  const [status, setStatus] = useState<Status>('loading');
-  const [catalog, setCatalog] = useState<Catalog>(emptyCatalog);
+  const [cached] = useState(readCache);
+  const hasData = useRef(cached !== null);
+  const [status, setStatus] = useState<Status>(cached ? 'ready' : 'loading');
+  const [catalog, setCatalog] = useState<Catalog>(cached ?? emptyCatalog);
   const [attempt, setAttempt] = useState(0);
 
   useEffect(() => {
     let cancelled = false;
-    setStatus('loading');
+    if (!hasData.current) setStatus('loading');
     loadCatalog().then(
       (data) => {
         if (cancelled) return;
-        setCatalog(data);
+        hasData.current = true;
+        writeCache(data);
+        // Dữ liệu không đổi thì giữ nguyên object để trang không vẽ lại.
+        setCatalog((prev) => (JSON.stringify(prev) === JSON.stringify(data) ? prev : data));
         setStatus('ready');
       },
       () => {
-        if (!cancelled) setStatus('error');
+        // Đã có bản nhớ thì cứ dùng, chỉ báo lỗi khi chưa có gì để hiển thị.
+        if (!cancelled) setStatus(hasData.current ? 'ready' : 'error');
       },
     );
     return () => {

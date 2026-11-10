@@ -2,7 +2,7 @@ import { readFileSync } from 'node:fs';
 import { getDb } from '../server/db';
 
 // Tạo bảng và nạp sản phẩm mẫu vào DATABASE_URL: chạy supabase/schema.sql rồi supabase/seed.sql trong MỘT transaction.
-// Chạy lại an toàn: schema dùng "if not exists", seed dùng "on conflict do nothing" (không ghi đè giá/tồn kho đã chỉnh).
+// Chạy lại an toàn: schema dùng "if not exists", seed cập nhật nội dung sản phẩm nhưng không ghi đè giá/tồn kho đã chỉnh trong /admin.
 // Chạy: npm run db:setup
 
 if (!process.env.DATABASE_URL?.trim()) {

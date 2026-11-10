@@ -17,10 +17,16 @@ export interface ArtSpec {
   size: [number, number];
 }
 
-export const MAT_COLORS: Record<string, string> = { Xám: '#6b6b68', Đen: '#222222' };
-const SOON = '#efede9';
-const DESK = '#e6e4df';
-const INK = '#161616';
+export const MAT_COLORS: Record<string, string> = {
+  Xám: '#6b6b68',
+  Đen: '#222222',
+  Đỏ: '#b3261e',
+  'Xanh dương': '#2f5d9e',
+  Trắng: '#f1f0ec',
+};
+const SOON = '#e6f0fd';
+const DESK = '#dbe9fc';
+const INK = '#12306b';
 
 /** Đọc "800 × 300 mm" từ thông số; mặc định cỡ M. */
 export function matSize(variant?: Variant): [number, number] {
@@ -43,7 +49,7 @@ export function artFor(product: Product, variant?: Variant, view = 0): ArtSpec {
 function KeyPattern({ id }: { id: string }) {
   return (
     <pattern id={id} width="26" height="26" patternUnits="userSpaceOnUse">
-      <rect x="3" y="3" width="21" height="21" rx="3" fill="#dcdad5" />
+      <rect x="3" y="3" width="21" height="21" rx="3" fill="#c3d6f3" />
     </pattern>
   );
 }
@@ -81,14 +87,18 @@ function Clip({ x, y, slots = 3 }: { x: number; y: number; slots?: number }) {
 /** Một card nhỏ: vật thể trên nền bàn. viewBox 1200×900 (tỉ lệ 4:3). */
 export function ProductArt({ art }: { art: ArtSpec }) {
   const { kind, color, view, label, size } = art;
-  const s = 0.9;
+  // Cỡ nào cũng nằm gọn trong khung: lớn hơn một chút so với trước, tối đa 1040 điểm ảnh chiều ngang.
+  const s = Math.min(1.1, 1040 / size[0]);
   const [mw, mh] = [size[0] * s, size[1] * s];
   const mx = 600 - mw / 2;
   const my = 450 - mh / 2;
   const mat = (
     <g>
+      <rect x={mx + 8} y={my + 20} width={mw} height={mh} rx="14" fill={INK} opacity="0.22" />
       <rect x={mx} y={my + 8} width={mw} height={mh} rx="12" fill={INK} />
       <rect x={mx} y={my} width={mw} height={mh} rx="12" fill={color} />
+      <rect x={mx + 14} y={my + 14} width={mw - 28} height={mh - 28} rx="8" fill="none" stroke="#ffffff" strokeOpacity="0.3" strokeWidth="3" strokeDasharray="9 7" />
+      <rect x={mx + mw - 104} y={my + mh - 44} width="76" height="20" rx="5" fill="#ffffff" opacity="0.28" />
     </g>
   );
   const clips = (
@@ -116,10 +126,23 @@ export function ProductArt({ art }: { art: ArtSpec }) {
     body = (
       <g>
         <rect width="1200" height="900" fill={DESK} />
-        <rect x="430" y="70" width="340" height="120" rx="8" fill="#2b2b2b" />
+        <rect x="380" y="30" width="440" height="190" rx="12" fill="#1c2f66" />
+        <rect x="394" y="44" width="412" height="162" rx="6" fill="#3a5ca8" />
+        <rect x="585" y="220" width="30" height="46" fill="#1c2f66" />
+        <rect x="520" y="262" width="160" height="14" rx="7" fill="#1c2f66" />
         {kind !== 'clip' && mat}
-        <Keyboard x={mx + 80} y={450 - 65} />
-        <Mouse x={mx + 530} y={450 - 54} />
+        {mw < 600 ? (
+          // Tấm lót nhỏ không chứa vừa bàn phím: bàn phím đặt phía trước, chuột nằm trên tấm lót.
+          <>
+            <Keyboard x={400} y={my + mh + 36} />
+            <Mouse x={600 - 31} y={450 - 54} />
+          </>
+        ) : (
+          <>
+            <Keyboard x={mx + 80} y={450 - 65} />
+            <Mouse x={mx + mw - 190} y={450 - 54} />
+          </>
+        )}
         {(kind === 'clip' || kind === 'bundle') && clips}
       </g>
     );

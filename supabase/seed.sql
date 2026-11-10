@@ -1,39 +1,240 @@
--- Dữ liệu mẫu cho Nook Studio. SINH TỰ ĐỘNG từ src/data/catalog.ts bằng `npm run db:seed-sql`; đừng sửa tay.
--- Chạy SAU schema.sql. Chạy lại không ghi đè giá/tồn kho bạn đã chỉnh trong /admin (on conflict do nothing).
+-- Dữ liệu mẫu cho Tam Thái Tử Store. SINH TỰ ĐỘNG từ src/data/catalog.ts bằng `npm run db:seed-sql`; đừng sửa tay.
+-- Chạy SAU schema.sql. Chạy lại an toàn: cập nhật nội dung sản phẩm (tên, mô tả, ảnh, thông số), thêm biến thể mới, nhưng KHÔNG ghi đè giá/tồn kho đã chỉnh trong /admin.
 
 insert into settings (key, value) values ('currency', 'VND') on conflict (key) do nothing;
 
 insert into products (id, slug, name, category, kind, short_description, description, usage, includes, images, attribute_names, related_ids, sort_order)
-values ('p-dm-a', 'deskmat-slate', 'Deskmat Slate', 'deskmat', 'single', 'Tấm lót bàn bề mặt mịn, tối giản cho góc làm việc và chơi game.', 'Bề mặt phẳng mịn cho chuột di chuyển êm, đế chống trượt giữ tấm lót đứng yên trên bàn. Hai cỡ và hai màu trung tính, dễ phối với mọi góc setup.', 'Lau bằng khăn ẩm, để khô tự nhiên. Không giặt máy.', '["Deskmat"]'::jsonb, '[{"alt":"Deskmat Slate, ảnh toàn sản phẩm"},{"alt":"Deskmat Slate đặt trong góc setup"},{"alt":"Chi tiết bề mặt và viền deskmat"}]'::jsonb, '["Cỡ","Màu"]'::jsonb, '["p-cb-c","p-bd-d"]'::jsonb, 0)
-on conflict (id) do nothing;
+values ('p-dm-a', 'deskmat-slate', 'Deskmat Slate', 'deskmat', 'single', 'Tấm lót bàn bề mặt mịn, tối giản cho góc làm việc và chơi game.', 'Bề mặt phẳng mịn cho chuột di chuyển êm, đế chống trượt giữ tấm lót đứng yên trên bàn. Hai cỡ và hai màu trung tính, dễ phối với mọi góc setup.', 'Lau bằng khăn ẩm, để khô tự nhiên. Không giặt máy.', '["Deskmat"]'::jsonb, '[{"src":"/images/deskmat-slate-xam.jpg","alt":"Deskmat Slate màu xám, mặt đế đen cuộn ở mép trái","match":{"Màu":"Xám"}},{"src":"/images/deskmat-slate-den.jpg","alt":"Deskmat Slate màu đen, bề mặt vải mịn","match":{"Màu":"Đen"}},{"src":"/images/combo-slate-clip.jpg","alt":"Deskmat Slate đen trên bàn gỗ cùng bàn phím, chuột và hai kẹp dây"}]'::jsonb, '["Cỡ","Màu"]'::jsonb, '["p-cb-c","p-bd-d"]'::jsonb, 0)
+on conflict (id) do update set slug = excluded.slug, name = excluded.name, category = excluded.category, kind = excluded.kind, short_description = excluded.short_description, description = excluded.description, usage = excluded.usage, includes = excluded.includes, images = excluded.images, attribute_names = excluded.attribute_names, related_ids = excluded.related_ids, sort_order = excluded.sort_order;
 insert into products (id, slug, name, category, kind, short_description, description, usage, includes, images, attribute_names, related_ids, sort_order)
 values ('p-dm-b', 'deskmat-cloud', 'Deskmat Cloud', 'deskmat', 'single', 'Phiên bản mới của dòng deskmat, sắp ra mắt.', 'Thiết kế mới với bề mặt dày hơn. Thông tin chi tiết sẽ được cập nhật khi sản phẩm mở bán.', null, null, '[{"alt":"Deskmat Cloud"}]'::jsonb, '[]'::jsonb, '["p-dm-a"]'::jsonb, 1)
-on conflict (id) do nothing;
+on conflict (id) do update set slug = excluded.slug, name = excluded.name, category = excluded.category, kind = excluded.kind, short_description = excluded.short_description, description = excluded.description, usage = excluded.usage, includes = excluded.includes, images = excluded.images, attribute_names = excluded.attribute_names, related_ids = excluded.related_ids, sort_order = excluded.sort_order;
 insert into products (id, slug, name, category, kind, short_description, description, usage, includes, images, attribute_names, related_ids, sort_order)
-values ('p-cb-c', 'kep-day-clip', 'Kẹp dây Clip', 'cable', 'single', 'Kẹp silicone giữ dây sạc và dây tai nghe luôn đúng chỗ trên mặt bàn.', 'Gắn mép bàn hoặc mặt dưới bàn, giữ dây không rơi xuống sàn. Có hai loại theo số rãnh.', null, '["Kẹp dây"]'::jsonb, '[{"alt":"Kẹp dây Clip"}]'::jsonb, '["Loại"]'::jsonb, '["p-dm-a"]'::jsonb, 2)
-on conflict (id) do nothing;
+values ('p-cb-c', 'kep-day-clip', 'Kẹp dây Clip', 'cable', 'single', 'Kẹp silicone giữ dây sạc và dây tai nghe luôn đúng chỗ trên mặt bàn.', 'Gắn mép bàn hoặc mặt dưới bàn, giữ dây không rơi xuống sàn. Có hai loại theo số rãnh.', null, '["Kẹp dây"]'::jsonb, '[{"src":"/images/kep-day-3-ranh.jpg","alt":"Kẹp dây Clip loại 3 rãnh màu đen","match":{"Loại":"3 rãnh"}},{"src":"/images/kep-day-5-ranh.jpg","alt":"Kẹp dây Clip loại 5 rãnh màu đen","match":{"Loại":"5 rãnh"}}]'::jsonb, '["Loại"]'::jsonb, '["p-dm-a"]'::jsonb, 2)
+on conflict (id) do update set slug = excluded.slug, name = excluded.name, category = excluded.category, kind = excluded.kind, short_description = excluded.short_description, description = excluded.description, usage = excluded.usage, includes = excluded.includes, images = excluded.images, attribute_names = excluded.attribute_names, related_ids = excluded.related_ids, sort_order = excluded.sort_order;
 insert into products (id, slug, name, category, kind, short_description, description, usage, includes, images, attribute_names, related_ids, sort_order)
-values ('p-bd-d', 'bo-setup-essentials', 'Bộ Setup Essentials', 'bundle', 'bundle', 'Deskmat Slate cỡ M màu đen cùng hai kẹp dây, đủ để gọn gàng góc bàn.', 'Bộ cơ bản để bắt đầu một góc bàn gọn: một deskmat và hai kẹp dây loại 3 rãnh.', null, null, '[{"alt":"Bộ Setup Essentials"}]'::jsonb, '[]'::jsonb, '["p-dm-a","p-cb-c"]'::jsonb, 3)
-on conflict (id) do nothing;
+values ('p-bd-d', 'bo-setup-essentials', 'Bộ Setup Essentials', 'bundle', 'bundle', 'Deskmat Slate cỡ M màu đen cùng hai kẹp dây, đủ để gọn gàng góc bàn.', 'Bộ cơ bản để bắt đầu một góc bàn gọn: một deskmat và hai kẹp dây loại 3 rãnh.', null, null, '[{"src":"/images/combo-slate-clip.jpg","alt":"Bộ Setup Essentials: Deskmat Slate đen và hai kẹp dây 3 rãnh (bàn phím và chuột chỉ để minh họa)"}]'::jsonb, '[]'::jsonb, '["p-dm-a","p-cb-c"]'::jsonb, 3)
+on conflict (id) do update set slug = excluded.slug, name = excluded.name, category = excluded.category, kind = excluded.kind, short_description = excluded.short_description, description = excluded.description, usage = excluded.usage, includes = excluded.includes, images = excluded.images, attribute_names = excluded.attribute_names, related_ids = excluded.related_ids, sort_order = excluded.sort_order;
+insert into products (id, slug, name, category, kind, short_description, description, usage, includes, images, attribute_names, related_ids, sort_order)
+values ('p-pg-e', 'pad-gaming-arena', 'Pad Gaming Arena', 'deskmat', 'single', 'Pad chuột gaming bề mặt mịn, viền khâu chắc, năm cỡ và năm màu.', 'Bề mặt vải mịn cho chuột lướt nhanh và dừng chính xác, viền khâu chống tróc, đế cao su chống trượt giữ pad đứng yên khi di chuột mạnh. Từ cỡ S cho bàn nhỏ đến XXL phủ trọn bàn phím và chuột.', 'Lau bằng khăn ẩm, để khô tự nhiên. Không giặt máy, không phơi trực tiếp dưới nắng gắt.', '["Pad gaming"]'::jsonb, '[{"alt":"Pad Gaming Arena theo cỡ và màu đã chọn (hình minh họa)"},{"alt":"Pad Gaming Arena đặt cùng bàn phím và chuột (hình minh họa)"},{"alt":"Cận cảnh bề mặt vải và viền khâu (hình minh họa)"}]'::jsonb, '["Cỡ","Màu"]'::jsonb, '["p-dm-a","p-cb-c"]'::jsonb, 4)
+on conflict (id) do update set slug = excluded.slug, name = excluded.name, category = excluded.category, kind = excluded.kind, short_description = excluded.short_description, description = excluded.description, usage = excluded.usage, includes = excluded.includes, images = excluded.images, attribute_names = excluded.attribute_names, related_ids = excluded.related_ids, sort_order = excluded.sort_order;
+insert into products (id, slug, name, category, kind, short_description, description, usage, includes, images, attribute_names, related_ids, sort_order)
+values ('p-pm-f', 'pad-chuot-compact', 'Pad chuột Compact', 'deskmat', 'single', 'Pad chuột nhỏ gọn cho bàn hẹp hoặc chỉ cần lót riêng khu vực chuột.', 'Kích thước nhỏ, đủ chỗ cho chuột di chuyển mà không chiếm diện tích bàn. Phù hợp khi bạn đã có deskmat hoặc chỉ muốn thay pad cũ.', 'Lau bằng khăn ẩm, để khô tự nhiên.', '["Pad chuột"]'::jsonb, '[{"src":"/images/pad-logitech-graphite-1.jpg","alt":"Pad chuột Compact màu graphite","match":{"Màu":"Graphite"}},{"src":"/images/pad-logitech-graphite-2.jpg","alt":"Pad chuột Compact graphite, nhìn nghiêng","match":{"Màu":"Graphite"}},{"src":"/images/pad-logitech-rose-1.jpg","alt":"Pad chuột Compact màu hồng đậm","match":{"Màu":"Hồng đậm"}},{"src":"/images/pad-logitech-rose-2.jpg","alt":"Pad chuột Compact hồng đậm, góc bóc lộ mặt đế","match":{"Màu":"Hồng đậm"}},{"src":"/images/pad-razer-medium-1.jpg","alt":"Pad chuột cỡ trung bình màu đen","match":{"Màu":"Đen, cỡ trung"}},{"src":"/images/pad-razer-medium-2.jpg","alt":"Pad chuột cỡ trung bình màu đen, kích thước 360 × 275 mm","match":{"Màu":"Đen, cỡ trung"}}]'::jsonb, '["Màu"]'::jsonb, '["p-dm-a","p-pg-e"]'::jsonb, 5)
+on conflict (id) do update set slug = excluded.slug, name = excluded.name, category = excluded.category, kind = excluded.kind, short_description = excluded.short_description, description = excluded.description, usage = excluded.usage, includes = excluded.includes, images = excluded.images, attribute_names = excluded.attribute_names, related_ids = excluded.related_ids, sort_order = excluded.sort_order;
+insert into products (id, slug, name, category, kind, short_description, description, usage, includes, images, attribute_names, related_ids, sort_order)
+values ('p-wr-g', 'ke-tay-ban-phim', 'Kê tay bàn phím', 'accessory', 'single', 'Kê tay đồng tông với deskmat, chọn theo chiều dài bàn phím.', 'Đệm tựa cổ tay trước bàn phím, giúp tay thoải mái khi gõ lâu. Chọn bản 87 phím hoặc 98 phím theo chiều dài bàn phím của bạn.', 'Lau bằng khăn ẩm.', '["Kê tay"]'::jsonb, '[{"src":"/images/ke-tay-monsgeek-1.jpg","alt":"Kê tay bàn phím màu đen"},{"src":"/images/ke-tay-monsgeek-2.jpg","alt":"Tay đặt lên kê tay trước bàn phím cơ"},{"src":"/images/ke-tay-monsgeek-3.jpg","alt":"Kê tay đặt trước bàn phím trên bàn làm việc"},{"src":"/images/ke-tay-monsgeek-4.jpg","alt":"Kê tay có mặt đế chống trượt"}]'::jsonb, '["Cỡ"]'::jsonb, '["p-dm-a","p-kc-h"]'::jsonb, 6)
+on conflict (id) do update set slug = excluded.slug, name = excluded.name, category = excluded.category, kind = excluded.kind, short_description = excluded.short_description, description = excluded.description, usage = excluded.usage, includes = excluded.includes, images = excluded.images, attribute_names = excluded.attribute_names, related_ids = excluded.related_ids, sort_order = excluded.sort_order;
+insert into products (id, slug, name, category, kind, short_description, description, usage, includes, images, attribute_names, related_ids, sort_order)
+values ('p-kc-h', 'keycap-diem-nhan', 'Keycap điểm nhấn', 'accessory', 'single', 'Bộ keycap PBT chuyển màu hoặc bộ 4 phím điểm nhấn để phối màu với deskmat.', 'Bộ 135 nút PBT double-shot profile Cherry với ba tông chuyển màu, hoặc bộ 4 keycap điểm nhấn để thay Esc và các phím WASD. Kiểm tra layout bàn phím của bạn trước khi mua.', null, '["Bộ keycap"]'::jsonb, '[{"src":"/images/keycap-veekos-blackpink-1.jpg","alt":"Bộ keycap chuyển màu đen hồng, toàn bộ layout","match":{"Màu":"Đen hồng"}},{"src":"/images/keycap-veekos-blackpink-2.jpg","alt":"Cận cảnh keycap chuyển màu đen hồng","match":{"Màu":"Đen hồng"}},{"src":"/images/keycap-veekos-roselatte-1.jpg","alt":"Bộ keycap chuyển màu Rose Latte, toàn bộ layout","match":{"Màu":"Rose Latte"}},{"src":"/images/keycap-veekos-roselatte-2.jpg","alt":"Cận cảnh keycap chuyển màu Rose Latte","match":{"Màu":"Rose Latte"}},{"src":"/images/keycap-veekos-blaze-1.jpg","alt":"Bộ keycap chuyển màu Blaze, toàn bộ layout","match":{"Màu":"Blaze"}},{"src":"/images/keycap-veekos-blaze-2.jpg","alt":"Cận cảnh keycap chuyển màu Blaze","match":{"Màu":"Blaze"}},{"src":"/images/keycap-catpaws-1.jpg","alt":"Bộ 4 keycap điểm nhấn Cat Paws trắng hồng","match":{"Màu":"Trắng hồng"}},{"src":"/images/keycap-catpaws-3.jpg","alt":"Cận cảnh keycap Cat Paws","match":{"Màu":"Trắng hồng"}},{"src":"/images/keycap-catpaws-2.jpg","alt":"Keycap Cat Paws đặt giữa hoa trên nền hồng","match":{"Màu":"Trắng hồng"}},{"src":"/images/keycap-catpaws-4.jpg","alt":"Hộp bộ 4 keycap Cat Paws","match":{"Màu":"Trắng hồng"}}]'::jsonb, '["Bộ","Màu"]'::jsonb, '["p-kt-i","p-wr-g"]'::jsonb, 7)
+on conflict (id) do update set slug = excluded.slug, name = excluded.name, category = excluded.category, kind = excluded.kind, short_description = excluded.short_description, description = excluded.description, usage = excluded.usage, includes = excluded.includes, images = excluded.images, attribute_names = excluded.attribute_names, related_ids = excluded.related_ids, sort_order = excluded.sort_order;
+insert into products (id, slug, name, category, kind, short_description, description, usage, includes, images, attribute_names, related_ids, sort_order)
+values ('p-kt-i', 'khay-dung-keycap', 'Khay đựng keycap', 'accessory', 'single', 'Khay trong suốt cất keycap dư và dụng cụ tháo phím.', 'Khay chia ô giữ keycap thay ra khỏi bụi và thất lạc. Dành cho người hay thay keycap.', null, '["Một cặp khay"]'::jsonb, '[{"src":"/images/khay-keycap-trang-1.jpg","alt":"Khay đựng keycap trong suốt chứa bộ keycap","match":{"Màu":"Trong suốt"}},{"src":"/images/khay-keycap-trang-2.jpg","alt":"Khay trong suốt cùng hộp đựng","match":{"Màu":"Trong suốt"}},{"src":"/images/khay-keycap-trang-3.jpg","alt":"Cặp khay trong suốt, nắp và đáy","match":{"Màu":"Trong suốt"}},{"src":"/images/khay-keycap-den-1.jpg","alt":"Khay đựng keycap màu khói chứa bộ keycap đen","match":{"Màu":"Khói"}},{"src":"/images/khay-keycap-den-2.jpg","alt":"Khay màu khói cùng hộp đựng","match":{"Màu":"Khói"}},{"src":"/images/khay-keycap-den-3.jpg","alt":"Cặp khay màu khói, nắp và đáy","match":{"Màu":"Khói"}}]'::jsonb, '["Màu"]'::jsonb, '["p-kc-h"]'::jsonb, 8)
+on conflict (id) do update set slug = excluded.slug, name = excluded.name, category = excluded.category, kind = excluded.kind, short_description = excluded.short_description, description = excluded.description, usage = excluded.usage, includes = excluded.includes, images = excluded.images, attribute_names = excluded.attribute_names, related_ids = excluded.related_ids, sort_order = excluded.sort_order;
+insert into products (id, slug, name, category, kind, short_description, description, usage, includes, images, attribute_names, related_ids, sort_order)
+values ('p-vl-j', 'day-buoc-cap', 'Dây buộc cáp velcro', 'cable', 'single', 'Dây velcro dùng lại nhiều lần để gom dây thừa và cố định bó dây.', 'Gom phần dây thừa hoặc cố định một bó dây sau bàn. Mở ra buộc lại được nhiều lần, không để lại keo.', null, '["Dây buộc"]'::jsonb, '[{"src":"/images/day-buoc-baseus-1.jpg","alt":"Cuộn dây buộc cáp velcro","match":{"Mẫu":"Nhiều màu"}},{"src":"/images/day-buoc-baseus-2.jpg","alt":"Dây velcro gom bó dây ổ cắm sau bàn","match":{"Mẫu":"Nhiều màu"}},{"src":"/images/day-buoc-ugreen.jpg","alt":"Dây buộc cáp velcro màu xám","match":{"Mẫu":"Xám"}}]'::jsonb, '["Mẫu","Dài"]'::jsonb, '["p-cb-c","p-sl-k"]'::jsonb, 9)
+on conflict (id) do update set slug = excluded.slug, name = excluded.name, category = excluded.category, kind = excluded.kind, short_description = excluded.short_description, description = excluded.description, usage = excluded.usage, includes = excluded.includes, images = excluded.images, attribute_names = excluded.attribute_names, related_ids = excluded.related_ids, sort_order = excluded.sort_order;
+insert into products (id, slug, name, category, kind, short_description, description, usage, includes, images, attribute_names, related_ids, sort_order)
+values ('p-sl-k', 'ong-boc-day', 'Ống bọc dây', 'cable', 'single', 'Ống xoắn PE gom nhiều dây chạy chung một đường gọn gàng.', 'Che cả đoạn dây dài, gom các dây chạy cùng hướng thành một bó. Cắt theo độ dài cần dùng.', null, '["Ống bọc dây"]'::jsonb, '[{"src":"/images/ong-boc-day-startech-1.jpg","alt":"Cuộn ống bọc dây vải đen dài 2 m","match":{"Dài":"2 m, vải đen"}},{"src":"/images/ong-boc-day-startech-2.jpg","alt":"Ống bọc dây vải đen gom hai dây cáp","match":{"Dài":"2 m, vải đen"}},{"src":"/images/ong-boc-day-startech-3.jpg","alt":"Cắt ống bọc dây theo độ dài cần dùng","match":{"Dài":"2 m, vải đen"}}]'::jsonb, '["Dài"]'::jsonb, '["p-vl-j","p-tr-l"]'::jsonb, 10)
+on conflict (id) do update set slug = excluded.slug, name = excluded.name, category = excluded.category, kind = excluded.kind, short_description = excluded.short_description, description = excluded.description, usage = excluded.usage, includes = excluded.includes, images = excluded.images, attribute_names = excluded.attribute_names, related_ids = excluded.related_ids, sort_order = excluded.sort_order;
+insert into products (id, slug, name, category, kind, short_description, description, usage, includes, images, attribute_names, related_ids, sort_order)
+values ('p-tr-l', 'khay-giau-day-duoi-ban', 'Khay giấu dây dưới bàn', 'cable', 'single', 'Khay kẹp dưới mặt bàn để ổ cắm, củ sạc và dây thừa.', 'Gắn bằng kẹp vào mép bàn, đặt ổ cắm và củ sạc khuất tầm mắt. Hợp khi vấn đề là thiếu chỗ chứa cả cụm thiết bị.', null, '["Khay","Bộ kẹp"]'::jsonb, '[{"src":"/images/khay-duoi-ban-hyperwork-den-1.jpg","alt":"Khay giấu dây màu đen với hai kẹp mép bàn","match":{"Màu":"Đen"}},{"src":"/images/khay-duoi-ban-hyperwork-den-2.jpg","alt":"Khay đen nhìn từ dưới mặt bàn","match":{"Màu":"Đen"}},{"src":"/images/khay-duoi-ban-hyperwork-den-3.jpg","alt":"Khay đen chứa ổ cắm và dây điện","match":{"Màu":"Đen"}},{"src":"/images/khay-duoi-ban-hyperwork-trang-4.jpg","alt":"Khay màu trắng gắn dưới bàn làm việc","match":{"Màu":"Trắng"}},{"src":"/images/khay-duoi-ban-hyperwork-trang-1.jpg","alt":"Khay màu trắng với kẹp mép bàn","match":{"Màu":"Trắng"}},{"src":"/images/khay-duoi-ban-hyperwork-trang-2.jpg","alt":"Khay màu trắng, nhìn thẳng","match":{"Màu":"Trắng"}},{"src":"/images/khay-duoi-ban-hyperwork-trang-3.jpg","alt":"Khay trắng chứa ổ cắm và dây điện","match":{"Màu":"Trắng"}}]'::jsonb, '["Màu"]'::jsonb, '["p-sl-k","p-vl-j"]'::jsonb, 11)
+on conflict (id) do update set slug = excluded.slug, name = excluded.name, category = excluded.category, kind = excluded.kind, short_description = excluded.short_description, description = excluded.description, usage = excluded.usage, includes = excluded.includes, images = excluded.images, attribute_names = excluded.attribute_names, related_ids = excluded.related_ids, sort_order = excluded.sort_order;
+insert into products (id, slug, name, category, kind, short_description, description, usage, includes, images, attribute_names, related_ids, sort_order)
+values ('p-ph-m', 'gia-do-dien-thoai', 'Giá đỡ điện thoại có khe đi dây', 'accessory', 'single', 'Giá đặt điện thoại cố định, có khe đi dây để vừa dùng vừa sạc.', 'Một vị trí cố định cho điện thoại trên bàn. Khe dây giúp bạn dùng máy khi đang cắm sạc. Có bản lớn và bản nhỏ.', null, '["Giá đỡ"]'::jsonb, '[{"src":"/images/gia-do-dien-thoai-trang.jpg","alt":"Giá đỡ điện thoại có khe đi dây (ảnh mẫu màu trắng, bản màu đen cùng kiểu dáng)"}]'::jsonb, '["Cỡ","Màu"]'::jsonb, '["p-tr-l","p-tw-n"]'::jsonb, 12)
+on conflict (id) do update set slug = excluded.slug, name = excluded.name, category = excluded.category, kind = excluded.kind, short_description = excluded.short_description, description = excluded.description, usage = excluded.usage, includes = excluded.includes, images = excluded.images, attribute_names = excluded.attribute_names, related_ids = excluded.related_ids, sort_order = excluded.sort_order;
+insert into products (id, slug, name, category, kind, short_description, description, usage, includes, images, attribute_names, related_ids, sort_order)
+values ('p-tw-n', 'khay-de-do-nho', 'Khay để đồ nhỏ', 'accessory', 'single', 'Khay gom USB, đầu chuyển và đồ dùng nhỏ vào một chỗ.', 'Dọn mặt bàn bằng cách gom đồ nhỏ vào khay. Bốn cỡ khay màu be xếp ghép được, hoặc khay xám nhạt gắn bàn và tường.', null, '["Khay"]'::jsonb, '[{"src":"/images/khay-nho-nojig.jpg","alt":"Bộ khay đồ nhỏ màu be","match":{"Loại":["Be 10 × 10 cm","Be 10 × 20 cm","Be 15 × 20 cm","Be 20 × 25 cm"]}},{"src":"/images/khay-nho-fodertrag.jpg","alt":"Khay đồ nhỏ xám nhạt gắn bàn","match":{"Loại":"Xám nhạt gắn bàn"}}]'::jsonb, '["Loại"]'::jsonb, '["p-ph-m","p-hh-o"]'::jsonb, 13)
+on conflict (id) do update set slug = excluded.slug, name = excluded.name, category = excluded.category, kind = excluded.kind, short_description = excluded.short_description, description = excluded.description, usage = excluded.usage, includes = excluded.includes, images = excluded.images, attribute_names = excluded.attribute_names, related_ids = excluded.related_ids, sort_order = excluded.sort_order;
+insert into products (id, slug, name, category, kind, short_description, description, usage, includes, images, attribute_names, related_ids, sort_order)
+values ('p-hh-o', 'moc-treo-tai-nghe', 'Móc treo tai nghe dưới bàn', 'accessory', 'single', 'Chỗ treo tai nghe riêng dưới mặt bàn, giữ mặt bàn thoáng.', 'Gắn dưới bàn để treo tai nghe, không chiếm chỗ trên mặt bàn. Có bản treo đôi hoặc bản một móc kèm móc giữ dây.', null, '["Móc treo"]'::jsonb, '[{"src":"/images/moc-tai-nghe-bigt-1.jpg","alt":"Móc treo tai nghe đôi màu đen","match":{"Loại":"Treo đôi"}},{"src":"/images/moc-tai-nghe-bigt-2.jpg","alt":"Hai tai nghe treo dưới mặt bàn","match":{"Loại":"Treo đôi"}},{"src":"/images/moc-tai-nghe-bigt-3.jpg","alt":"Cận cảnh móc giữ headband tai nghe","match":{"Loại":"Treo đôi"}},{"src":"/images/moc-tai-nghe-bigt-4.jpg","alt":"Móc treo đôi nhìn nghiêng","match":{"Loại":"Treo đôi"}},{"src":"/images/moc-tai-nghe-ultraj-1.jpg","alt":"Móc treo tai nghe một móc có móc giữ dây","match":{"Loại":"Một móc, có móc giữ dây"}},{"src":"/images/moc-tai-nghe-ultraj-2.jpg","alt":"Móc treo tai nghe gắn dưới bàn","match":{"Loại":"Một móc, có móc giữ dây"}},{"src":"/images/moc-tai-nghe-ultraj-3.jpg","alt":"Móc giữ dây tích hợp và miếng dán 3M","match":{"Loại":"Một móc, có móc giữ dây"}},{"src":"/images/moc-tai-nghe-ultraj-4.jpg","alt":"Kích thước móc treo tai nghe một móc","match":{"Loại":"Một móc, có móc giữ dây"}}]'::jsonb, '["Loại"]'::jsonb, '["p-tr-l","p-tw-n"]'::jsonb, 14)
+on conflict (id) do update set slug = excluded.slug, name = excluded.name, category = excluded.category, kind = excluded.kind, short_description = excluded.short_description, description = excluded.description, usage = excluded.usage, includes = excluded.includes, images = excluded.images, attribute_names = excluded.attribute_names, related_ids = excluded.related_ids, sort_order = excluded.sort_order;
 
 insert into variants (id, product_id, attributes, price, stock, specs, components, sort_order)
 values ('dm-a-m-grey', 'p-dm-a', '{"Cỡ":"M","Màu":"Xám"}'::jsonb, 249000, 20, '[{"name":"Kích thước","value":"800 × 300 mm"},{"name":"Độ dày","value":"3 mm"},{"name":"Chất liệu","value":"Vải microfiber, đế cao su"}]'::jsonb, null, 0)
-on conflict (id) do nothing;
+on conflict (id) do update set attributes = excluded.attributes, specs = excluded.specs, components = excluded.components, sort_order = excluded.sort_order;
 insert into variants (id, product_id, attributes, price, stock, specs, components, sort_order)
 values ('dm-a-m-black', 'p-dm-a', '{"Cỡ":"M","Màu":"Đen"}'::jsonb, 249000, 20, '[{"name":"Kích thước","value":"800 × 300 mm"},{"name":"Độ dày","value":"3 mm"},{"name":"Chất liệu","value":"Vải microfiber, đế cao su"}]'::jsonb, null, 1)
-on conflict (id) do nothing;
+on conflict (id) do update set attributes = excluded.attributes, specs = excluded.specs, components = excluded.components, sort_order = excluded.sort_order;
 insert into variants (id, product_id, attributes, price, stock, specs, components, sort_order)
 values ('dm-a-l-black', 'p-dm-a', '{"Cỡ":"L","Màu":"Đen"}'::jsonb, 329000, 20, '[{"name":"Kích thước","value":"900 × 400 mm"},{"name":"Độ dày","value":"3 mm"},{"name":"Chất liệu","value":"Vải microfiber, đế cao su"}]'::jsonb, null, 2)
-on conflict (id) do nothing;
+on conflict (id) do update set attributes = excluded.attributes, specs = excluded.specs, components = excluded.components, sort_order = excluded.sort_order;
 insert into variants (id, product_id, attributes, price, stock, specs, components, sort_order)
 values ('dm-b-std', 'p-dm-b', '{}'::jsonb, null, 20, '[]'::jsonb, null, 0)
-on conflict (id) do nothing;
+on conflict (id) do update set attributes = excluded.attributes, specs = excluded.specs, components = excluded.components, sort_order = excluded.sort_order;
 insert into variants (id, product_id, attributes, price, stock, specs, components, sort_order)
 values ('cb-c-3', 'p-cb-c', '{"Loại":"3 rãnh"}'::jsonb, 39000, 20, '[{"name":"Chất liệu","value":"Silicone"},{"name":"Cách gắn","value":"Miếng dán mặt sau"}]'::jsonb, null, 0)
-on conflict (id) do nothing;
+on conflict (id) do update set attributes = excluded.attributes, specs = excluded.specs, components = excluded.components, sort_order = excluded.sort_order;
 insert into variants (id, product_id, attributes, price, stock, specs, components, sort_order)
 values ('cb-c-5', 'p-cb-c', '{"Loại":"5 rãnh"}'::jsonb, 59000, 20, '[{"name":"Chất liệu","value":"Silicone"},{"name":"Cách gắn","value":"Miếng dán mặt sau"}]'::jsonb, null, 1)
-on conflict (id) do nothing;
+on conflict (id) do update set attributes = excluded.attributes, specs = excluded.specs, components = excluded.components, sort_order = excluded.sort_order;
 insert into variants (id, product_id, attributes, price, stock, specs, components, sort_order)
 values ('bd-d-std', 'p-bd-d', '{}'::jsonb, 319000, 20, '[]'::jsonb, '[{"variantId":"dm-a-m-black","quantity":1},{"variantId":"cb-c-3","quantity":2}]'::jsonb, 0)
-on conflict (id) do nothing;
+on conflict (id) do update set attributes = excluded.attributes, specs = excluded.specs, components = excluded.components, sort_order = excluded.sort_order;
+insert into variants (id, product_id, attributes, price, stock, specs, components, sort_order)
+values ('pg-s-den', 'p-pg-e', '{"Cỡ":"S","Màu":"Đen"}'::jsonb, 99000, 20, '[{"name":"Kích thước","value":"350 × 300 mm"},{"name":"Độ dày","value":"4 mm"},{"name":"Chất liệu","value":"Vải bề mặt mịn, viền khâu, đế cao su"}]'::jsonb, null, 0)
+on conflict (id) do update set attributes = excluded.attributes, specs = excluded.specs, components = excluded.components, sort_order = excluded.sort_order;
+insert into variants (id, product_id, attributes, price, stock, specs, components, sort_order)
+values ('pg-s-xam', 'p-pg-e', '{"Cỡ":"S","Màu":"Xám"}'::jsonb, 99000, 20, '[{"name":"Kích thước","value":"350 × 300 mm"},{"name":"Độ dày","value":"4 mm"},{"name":"Chất liệu","value":"Vải bề mặt mịn, viền khâu, đế cao su"}]'::jsonb, null, 1)
+on conflict (id) do update set attributes = excluded.attributes, specs = excluded.specs, components = excluded.components, sort_order = excluded.sort_order;
+insert into variants (id, product_id, attributes, price, stock, specs, components, sort_order)
+values ('pg-s-do', 'p-pg-e', '{"Cỡ":"S","Màu":"Đỏ"}'::jsonb, 99000, 20, '[{"name":"Kích thước","value":"350 × 300 mm"},{"name":"Độ dày","value":"4 mm"},{"name":"Chất liệu","value":"Vải bề mặt mịn, viền khâu, đế cao su"}]'::jsonb, null, 2)
+on conflict (id) do update set attributes = excluded.attributes, specs = excluded.specs, components = excluded.components, sort_order = excluded.sort_order;
+insert into variants (id, product_id, attributes, price, stock, specs, components, sort_order)
+values ('pg-s-xanh', 'p-pg-e', '{"Cỡ":"S","Màu":"Xanh dương"}'::jsonb, 99000, 20, '[{"name":"Kích thước","value":"350 × 300 mm"},{"name":"Độ dày","value":"4 mm"},{"name":"Chất liệu","value":"Vải bề mặt mịn, viền khâu, đế cao su"}]'::jsonb, null, 3)
+on conflict (id) do update set attributes = excluded.attributes, specs = excluded.specs, components = excluded.components, sort_order = excluded.sort_order;
+insert into variants (id, product_id, attributes, price, stock, specs, components, sort_order)
+values ('pg-s-trang', 'p-pg-e', '{"Cỡ":"S","Màu":"Trắng"}'::jsonb, 99000, 20, '[{"name":"Kích thước","value":"350 × 300 mm"},{"name":"Độ dày","value":"4 mm"},{"name":"Chất liệu","value":"Vải bề mặt mịn, viền khâu, đế cao su"}]'::jsonb, null, 4)
+on conflict (id) do update set attributes = excluded.attributes, specs = excluded.specs, components = excluded.components, sort_order = excluded.sort_order;
+insert into variants (id, product_id, attributes, price, stock, specs, components, sort_order)
+values ('pg-m-den', 'p-pg-e', '{"Cỡ":"M","Màu":"Đen"}'::jsonb, 179000, 20, '[{"name":"Kích thước","value":"800 × 300 mm"},{"name":"Độ dày","value":"4 mm"},{"name":"Chất liệu","value":"Vải bề mặt mịn, viền khâu, đế cao su"}]'::jsonb, null, 5)
+on conflict (id) do update set attributes = excluded.attributes, specs = excluded.specs, components = excluded.components, sort_order = excluded.sort_order;
+insert into variants (id, product_id, attributes, price, stock, specs, components, sort_order)
+values ('pg-m-xam', 'p-pg-e', '{"Cỡ":"M","Màu":"Xám"}'::jsonb, 179000, 20, '[{"name":"Kích thước","value":"800 × 300 mm"},{"name":"Độ dày","value":"4 mm"},{"name":"Chất liệu","value":"Vải bề mặt mịn, viền khâu, đế cao su"}]'::jsonb, null, 6)
+on conflict (id) do update set attributes = excluded.attributes, specs = excluded.specs, components = excluded.components, sort_order = excluded.sort_order;
+insert into variants (id, product_id, attributes, price, stock, specs, components, sort_order)
+values ('pg-m-do', 'p-pg-e', '{"Cỡ":"M","Màu":"Đỏ"}'::jsonb, 179000, 20, '[{"name":"Kích thước","value":"800 × 300 mm"},{"name":"Độ dày","value":"4 mm"},{"name":"Chất liệu","value":"Vải bề mặt mịn, viền khâu, đế cao su"}]'::jsonb, null, 7)
+on conflict (id) do update set attributes = excluded.attributes, specs = excluded.specs, components = excluded.components, sort_order = excluded.sort_order;
+insert into variants (id, product_id, attributes, price, stock, specs, components, sort_order)
+values ('pg-m-xanh', 'p-pg-e', '{"Cỡ":"M","Màu":"Xanh dương"}'::jsonb, 179000, 20, '[{"name":"Kích thước","value":"800 × 300 mm"},{"name":"Độ dày","value":"4 mm"},{"name":"Chất liệu","value":"Vải bề mặt mịn, viền khâu, đế cao su"}]'::jsonb, null, 8)
+on conflict (id) do update set attributes = excluded.attributes, specs = excluded.specs, components = excluded.components, sort_order = excluded.sort_order;
+insert into variants (id, product_id, attributes, price, stock, specs, components, sort_order)
+values ('pg-m-trang', 'p-pg-e', '{"Cỡ":"M","Màu":"Trắng"}'::jsonb, 179000, 20, '[{"name":"Kích thước","value":"800 × 300 mm"},{"name":"Độ dày","value":"4 mm"},{"name":"Chất liệu","value":"Vải bề mặt mịn, viền khâu, đế cao su"}]'::jsonb, null, 9)
+on conflict (id) do update set attributes = excluded.attributes, specs = excluded.specs, components = excluded.components, sort_order = excluded.sort_order;
+insert into variants (id, product_id, attributes, price, stock, specs, components, sort_order)
+values ('pg-l-den', 'p-pg-e', '{"Cỡ":"L","Màu":"Đen"}'::jsonb, 229000, 20, '[{"name":"Kích thước","value":"900 × 400 mm"},{"name":"Độ dày","value":"4 mm"},{"name":"Chất liệu","value":"Vải bề mặt mịn, viền khâu, đế cao su"}]'::jsonb, null, 10)
+on conflict (id) do update set attributes = excluded.attributes, specs = excluded.specs, components = excluded.components, sort_order = excluded.sort_order;
+insert into variants (id, product_id, attributes, price, stock, specs, components, sort_order)
+values ('pg-l-xam', 'p-pg-e', '{"Cỡ":"L","Màu":"Xám"}'::jsonb, 229000, 20, '[{"name":"Kích thước","value":"900 × 400 mm"},{"name":"Độ dày","value":"4 mm"},{"name":"Chất liệu","value":"Vải bề mặt mịn, viền khâu, đế cao su"}]'::jsonb, null, 11)
+on conflict (id) do update set attributes = excluded.attributes, specs = excluded.specs, components = excluded.components, sort_order = excluded.sort_order;
+insert into variants (id, product_id, attributes, price, stock, specs, components, sort_order)
+values ('pg-l-do', 'p-pg-e', '{"Cỡ":"L","Màu":"Đỏ"}'::jsonb, 229000, 20, '[{"name":"Kích thước","value":"900 × 400 mm"},{"name":"Độ dày","value":"4 mm"},{"name":"Chất liệu","value":"Vải bề mặt mịn, viền khâu, đế cao su"}]'::jsonb, null, 12)
+on conflict (id) do update set attributes = excluded.attributes, specs = excluded.specs, components = excluded.components, sort_order = excluded.sort_order;
+insert into variants (id, product_id, attributes, price, stock, specs, components, sort_order)
+values ('pg-l-xanh', 'p-pg-e', '{"Cỡ":"L","Màu":"Xanh dương"}'::jsonb, 229000, 20, '[{"name":"Kích thước","value":"900 × 400 mm"},{"name":"Độ dày","value":"4 mm"},{"name":"Chất liệu","value":"Vải bề mặt mịn, viền khâu, đế cao su"}]'::jsonb, null, 13)
+on conflict (id) do update set attributes = excluded.attributes, specs = excluded.specs, components = excluded.components, sort_order = excluded.sort_order;
+insert into variants (id, product_id, attributes, price, stock, specs, components, sort_order)
+values ('pg-l-trang', 'p-pg-e', '{"Cỡ":"L","Màu":"Trắng"}'::jsonb, 229000, 20, '[{"name":"Kích thước","value":"900 × 400 mm"},{"name":"Độ dày","value":"4 mm"},{"name":"Chất liệu","value":"Vải bề mặt mịn, viền khâu, đế cao su"}]'::jsonb, null, 14)
+on conflict (id) do update set attributes = excluded.attributes, specs = excluded.specs, components = excluded.components, sort_order = excluded.sort_order;
+insert into variants (id, product_id, attributes, price, stock, specs, components, sort_order)
+values ('pg-xl-den', 'p-pg-e', '{"Cỡ":"XL","Màu":"Đen"}'::jsonb, 299000, 20, '[{"name":"Kích thước","value":"1000 × 500 mm"},{"name":"Độ dày","value":"4 mm"},{"name":"Chất liệu","value":"Vải bề mặt mịn, viền khâu, đế cao su"}]'::jsonb, null, 15)
+on conflict (id) do update set attributes = excluded.attributes, specs = excluded.specs, components = excluded.components, sort_order = excluded.sort_order;
+insert into variants (id, product_id, attributes, price, stock, specs, components, sort_order)
+values ('pg-xl-xam', 'p-pg-e', '{"Cỡ":"XL","Màu":"Xám"}'::jsonb, 299000, 20, '[{"name":"Kích thước","value":"1000 × 500 mm"},{"name":"Độ dày","value":"4 mm"},{"name":"Chất liệu","value":"Vải bề mặt mịn, viền khâu, đế cao su"}]'::jsonb, null, 16)
+on conflict (id) do update set attributes = excluded.attributes, specs = excluded.specs, components = excluded.components, sort_order = excluded.sort_order;
+insert into variants (id, product_id, attributes, price, stock, specs, components, sort_order)
+values ('pg-xl-do', 'p-pg-e', '{"Cỡ":"XL","Màu":"Đỏ"}'::jsonb, 299000, 20, '[{"name":"Kích thước","value":"1000 × 500 mm"},{"name":"Độ dày","value":"4 mm"},{"name":"Chất liệu","value":"Vải bề mặt mịn, viền khâu, đế cao su"}]'::jsonb, null, 17)
+on conflict (id) do update set attributes = excluded.attributes, specs = excluded.specs, components = excluded.components, sort_order = excluded.sort_order;
+insert into variants (id, product_id, attributes, price, stock, specs, components, sort_order)
+values ('pg-xl-xanh', 'p-pg-e', '{"Cỡ":"XL","Màu":"Xanh dương"}'::jsonb, 299000, 20, '[{"name":"Kích thước","value":"1000 × 500 mm"},{"name":"Độ dày","value":"4 mm"},{"name":"Chất liệu","value":"Vải bề mặt mịn, viền khâu, đế cao su"}]'::jsonb, null, 18)
+on conflict (id) do update set attributes = excluded.attributes, specs = excluded.specs, components = excluded.components, sort_order = excluded.sort_order;
+insert into variants (id, product_id, attributes, price, stock, specs, components, sort_order)
+values ('pg-xl-trang', 'p-pg-e', '{"Cỡ":"XL","Màu":"Trắng"}'::jsonb, 299000, 20, '[{"name":"Kích thước","value":"1000 × 500 mm"},{"name":"Độ dày","value":"4 mm"},{"name":"Chất liệu","value":"Vải bề mặt mịn, viền khâu, đế cao su"}]'::jsonb, null, 19)
+on conflict (id) do update set attributes = excluded.attributes, specs = excluded.specs, components = excluded.components, sort_order = excluded.sort_order;
+insert into variants (id, product_id, attributes, price, stock, specs, components, sort_order)
+values ('pg-xxl-den', 'p-pg-e', '{"Cỡ":"XXL","Màu":"Đen"}'::jsonb, 399000, 20, '[{"name":"Kích thước","value":"1200 × 600 mm"},{"name":"Độ dày","value":"4 mm"},{"name":"Chất liệu","value":"Vải bề mặt mịn, viền khâu, đế cao su"}]'::jsonb, null, 20)
+on conflict (id) do update set attributes = excluded.attributes, specs = excluded.specs, components = excluded.components, sort_order = excluded.sort_order;
+insert into variants (id, product_id, attributes, price, stock, specs, components, sort_order)
+values ('pg-xxl-xam', 'p-pg-e', '{"Cỡ":"XXL","Màu":"Xám"}'::jsonb, 399000, 20, '[{"name":"Kích thước","value":"1200 × 600 mm"},{"name":"Độ dày","value":"4 mm"},{"name":"Chất liệu","value":"Vải bề mặt mịn, viền khâu, đế cao su"}]'::jsonb, null, 21)
+on conflict (id) do update set attributes = excluded.attributes, specs = excluded.specs, components = excluded.components, sort_order = excluded.sort_order;
+insert into variants (id, product_id, attributes, price, stock, specs, components, sort_order)
+values ('pg-xxl-do', 'p-pg-e', '{"Cỡ":"XXL","Màu":"Đỏ"}'::jsonb, 399000, 20, '[{"name":"Kích thước","value":"1200 × 600 mm"},{"name":"Độ dày","value":"4 mm"},{"name":"Chất liệu","value":"Vải bề mặt mịn, viền khâu, đế cao su"}]'::jsonb, null, 22)
+on conflict (id) do update set attributes = excluded.attributes, specs = excluded.specs, components = excluded.components, sort_order = excluded.sort_order;
+insert into variants (id, product_id, attributes, price, stock, specs, components, sort_order)
+values ('pg-xxl-xanh', 'p-pg-e', '{"Cỡ":"XXL","Màu":"Xanh dương"}'::jsonb, 399000, 20, '[{"name":"Kích thước","value":"1200 × 600 mm"},{"name":"Độ dày","value":"4 mm"},{"name":"Chất liệu","value":"Vải bề mặt mịn, viền khâu, đế cao su"}]'::jsonb, null, 23)
+on conflict (id) do update set attributes = excluded.attributes, specs = excluded.specs, components = excluded.components, sort_order = excluded.sort_order;
+insert into variants (id, product_id, attributes, price, stock, specs, components, sort_order)
+values ('pg-xxl-trang', 'p-pg-e', '{"Cỡ":"XXL","Màu":"Trắng"}'::jsonb, 399000, 20, '[{"name":"Kích thước","value":"1200 × 600 mm"},{"name":"Độ dày","value":"4 mm"},{"name":"Chất liệu","value":"Vải bề mặt mịn, viền khâu, đế cao su"}]'::jsonb, null, 24)
+on conflict (id) do update set attributes = excluded.attributes, specs = excluded.specs, components = excluded.components, sort_order = excluded.sort_order;
+insert into variants (id, product_id, attributes, price, stock, specs, components, sort_order)
+values ('pm-f-graphite', 'p-pm-f', '{"Màu":"Graphite"}'::jsonb, 250000, 20, '[{"name":"Chất liệu","value":"Vải mịn, đế cao su"}]'::jsonb, null, 0)
+on conflict (id) do update set attributes = excluded.attributes, specs = excluded.specs, components = excluded.components, sort_order = excluded.sort_order;
+insert into variants (id, product_id, attributes, price, stock, specs, components, sort_order)
+values ('pm-f-rose', 'p-pm-f', '{"Màu":"Hồng đậm"}'::jsonb, 250000, 20, '[{"name":"Chất liệu","value":"Vải mịn, đế cao su"}]'::jsonb, null, 1)
+on conflict (id) do update set attributes = excluded.attributes, specs = excluded.specs, components = excluded.components, sort_order = excluded.sort_order;
+insert into variants (id, product_id, attributes, price, stock, specs, components, sort_order)
+values ('pm-f-black-m', 'p-pm-f', '{"Màu":"Đen, cỡ trung"}'::jsonb, 490000, 20, '[{"name":"Kích thước","value":"360 × 275 mm"},{"name":"Chất liệu","value":"Vải mịn, đế cao su"}]'::jsonb, null, 2)
+on conflict (id) do update set attributes = excluded.attributes, specs = excluded.specs, components = excluded.components, sort_order = excluded.sort_order;
+insert into variants (id, product_id, attributes, price, stock, specs, components, sort_order)
+values ('wr-g-87', 'p-wr-g', '{"Cỡ":"Bàn phím 87 phím"}'::jsonb, 250000, 20, '[{"name":"Màu","value":"Đen"}]'::jsonb, null, 0)
+on conflict (id) do update set attributes = excluded.attributes, specs = excluded.specs, components = excluded.components, sort_order = excluded.sort_order;
+insert into variants (id, product_id, attributes, price, stock, specs, components, sort_order)
+values ('wr-g-98', 'p-wr-g', '{"Cỡ":"Bàn phím 98 phím"}'::jsonb, 250000, 20, '[{"name":"Màu","value":"Đen"}]'::jsonb, null, 1)
+on conflict (id) do update set attributes = excluded.attributes, specs = excluded.specs, components = excluded.components, sort_order = excluded.sort_order;
+insert into variants (id, product_id, attributes, price, stock, specs, components, sort_order)
+values ('kc-h-grad-bp', 'p-kc-h', '{"Bộ":"Gradient 135 nút","Màu":"Đen hồng"}'::jsonb, 245000, 20, '[{"name":"Chất liệu","value":"PBT double-shot"},{"name":"Profile","value":"Cherry"}]'::jsonb, null, 0)
+on conflict (id) do update set attributes = excluded.attributes, specs = excluded.specs, components = excluded.components, sort_order = excluded.sort_order;
+insert into variants (id, product_id, attributes, price, stock, specs, components, sort_order)
+values ('kc-h-grad-rl', 'p-kc-h', '{"Bộ":"Gradient 135 nút","Màu":"Rose Latte"}'::jsonb, 245000, 20, '[{"name":"Chất liệu","value":"PBT double-shot"},{"name":"Profile","value":"Cherry"}]'::jsonb, null, 1)
+on conflict (id) do update set attributes = excluded.attributes, specs = excluded.specs, components = excluded.components, sort_order = excluded.sort_order;
+insert into variants (id, product_id, attributes, price, stock, specs, components, sort_order)
+values ('kc-h-grad-bl', 'p-kc-h', '{"Bộ":"Gradient 135 nút","Màu":"Blaze"}'::jsonb, 245000, 20, '[{"name":"Chất liệu","value":"PBT double-shot"},{"name":"Profile","value":"Cherry"}]'::jsonb, null, 2)
+on conflict (id) do update set attributes = excluded.attributes, specs = excluded.specs, components = excluded.components, sort_order = excluded.sort_order;
+insert into variants (id, product_id, attributes, price, stock, specs, components, sort_order)
+values ('kc-h-paws', 'p-kc-h', '{"Bộ":"Cat Paws 4 nút","Màu":"Trắng hồng"}'::jsonb, 119000, 20, '[{"name":"Loại","value":"Keycap artisan điểm nhấn"}]'::jsonb, null, 3)
+on conflict (id) do update set attributes = excluded.attributes, specs = excluded.specs, components = excluded.components, sort_order = excluded.sort_order;
+insert into variants (id, product_id, attributes, price, stock, specs, components, sort_order)
+values ('kt-i-clear', 'p-kt-i', '{"Màu":"Trong suốt"}'::jsonb, 330000, 20, '[{"name":"Quy cách","value":"1 cặp khay"}]'::jsonb, null, 0)
+on conflict (id) do update set attributes = excluded.attributes, specs = excluded.specs, components = excluded.components, sort_order = excluded.sort_order;
+insert into variants (id, product_id, attributes, price, stock, specs, components, sort_order)
+values ('kt-i-smoke', 'p-kt-i', '{"Màu":"Khói"}'::jsonb, 330000, 20, '[{"name":"Quy cách","value":"1 cặp khay"}]'::jsonb, null, 1)
+on conflict (id) do update set attributes = excluded.attributes, specs = excluded.specs, components = excluded.components, sort_order = excluded.sort_order;
+insert into variants (id, product_id, attributes, price, stock, specs, components, sort_order)
+values ('vl-j-mc-1', 'p-vl-j', '{"Mẫu":"Nhiều màu","Dài":"1 m"}'::jsonb, 59000, 20, '[]'::jsonb, null, 0)
+on conflict (id) do update set attributes = excluded.attributes, specs = excluded.specs, components = excluded.components, sort_order = excluded.sort_order;
+insert into variants (id, product_id, attributes, price, stock, specs, components, sort_order)
+values ('vl-j-mc-3', 'p-vl-j', '{"Mẫu":"Nhiều màu","Dài":"3 m"}'::jsonb, 89000, 20, '[]'::jsonb, null, 1)
+on conflict (id) do update set attributes = excluded.attributes, specs = excluded.specs, components = excluded.components, sort_order = excluded.sort_order;
+insert into variants (id, product_id, attributes, price, stock, specs, components, sort_order)
+values ('vl-j-xam-1', 'p-vl-j', '{"Mẫu":"Xám","Dài":"1 m"}'::jsonb, 40000, 20, '[]'::jsonb, null, 2)
+on conflict (id) do update set attributes = excluded.attributes, specs = excluded.specs, components = excluded.components, sort_order = excluded.sort_order;
+insert into variants (id, product_id, attributes, price, stock, specs, components, sort_order)
+values ('vl-j-xam-3', 'p-vl-j', '{"Mẫu":"Xám","Dài":"3 m"}'::jsonb, 100000, 20, '[]'::jsonb, null, 3)
+on conflict (id) do update set attributes = excluded.attributes, specs = excluded.specs, components = excluded.components, sort_order = excluded.sort_order;
+insert into variants (id, product_id, attributes, price, stock, specs, components, sort_order)
+values ('sl-k-15', 'p-sl-k', '{"Dài":"1,5 m"}'::jsonb, 50000, 20, '[{"name":"Chất liệu","value":"PE"}]'::jsonb, null, 0)
+on conflict (id) do update set attributes = excluded.attributes, specs = excluded.specs, components = excluded.components, sort_order = excluded.sort_order;
+insert into variants (id, product_id, attributes, price, stock, specs, components, sort_order)
+values ('sl-k-3', 'p-sl-k', '{"Dài":"3 m"}'::jsonb, 90000, 20, '[{"name":"Chất liệu","value":"PE"}]'::jsonb, null, 1)
+on conflict (id) do update set attributes = excluded.attributes, specs = excluded.specs, components = excluded.components, sort_order = excluded.sort_order;
+insert into variants (id, product_id, attributes, price, stock, specs, components, sort_order)
+values ('sl-k-2-black', 'p-sl-k', '{"Dài":"2 m, vải đen"}'::jsonb, 550000, 20, '[{"name":"Chất liệu","value":"Vải dệt, màu đen"}]'::jsonb, null, 2)
+on conflict (id) do update set attributes = excluded.attributes, specs = excluded.specs, components = excluded.components, sort_order = excluded.sort_order;
+insert into variants (id, product_id, attributes, price, stock, specs, components, sort_order)
+values ('tr-l-black', 'p-tr-l', '{"Màu":"Đen"}'::jsonb, 329000, 20, '[{"name":"Cách gắn","value":"Kẹp mép bàn"}]'::jsonb, null, 0)
+on conflict (id) do update set attributes = excluded.attributes, specs = excluded.specs, components = excluded.components, sort_order = excluded.sort_order;
+insert into variants (id, product_id, attributes, price, stock, specs, components, sort_order)
+values ('tr-l-white', 'p-tr-l', '{"Màu":"Trắng"}'::jsonb, 329000, 20, '[{"name":"Cách gắn","value":"Kẹp mép bàn"}]'::jsonb, null, 1)
+on conflict (id) do update set attributes = excluded.attributes, specs = excluded.specs, components = excluded.components, sort_order = excluded.sort_order;
+insert into variants (id, product_id, attributes, price, stock, specs, components, sort_order)
+values ('ph-m-l-black', 'p-ph-m', '{"Cỡ":"Lớn","Màu":"Đen"}'::jsonb, 104000, 20, '[{"name":"Kích thước","value":"96 × 85 × 21 mm"}]'::jsonb, null, 0)
+on conflict (id) do update set attributes = excluded.attributes, specs = excluded.specs, components = excluded.components, sort_order = excluded.sort_order;
+insert into variants (id, product_id, attributes, price, stock, specs, components, sort_order)
+values ('ph-m-l-white', 'p-ph-m', '{"Cỡ":"Lớn","Màu":"Trắng"}'::jsonb, 98000, 20, '[{"name":"Kích thước","value":"96 × 85 × 21 mm"}]'::jsonb, null, 1)
+on conflict (id) do update set attributes = excluded.attributes, specs = excluded.specs, components = excluded.components, sort_order = excluded.sort_order;
+insert into variants (id, product_id, attributes, price, stock, specs, components, sort_order)
+values ('ph-m-s-black', 'p-ph-m', '{"Cỡ":"Nhỏ","Màu":"Đen"}'::jsonb, 80000, 20, '[{"name":"Kích thước","value":"95 × 75 × 18 mm"}]'::jsonb, null, 2)
+on conflict (id) do update set attributes = excluded.attributes, specs = excluded.specs, components = excluded.components, sort_order = excluded.sort_order;
+insert into variants (id, product_id, attributes, price, stock, specs, components, sort_order)
+values ('ph-m-s-white', 'p-ph-m', '{"Cỡ":"Nhỏ","Màu":"Trắng"}'::jsonb, 70000, 20, '[{"name":"Kích thước","value":"95 × 75 × 18 mm"}]'::jsonb, null, 3)
+on conflict (id) do update set attributes = excluded.attributes, specs = excluded.specs, components = excluded.components, sort_order = excluded.sort_order;
+insert into variants (id, product_id, attributes, price, stock, specs, components, sort_order)
+values ('tw-n-1', 'p-tw-n', '{"Loại":"Be 10 × 10 cm"}'::jsonb, 7000, 20, '[{"name":"Kích thước","value":"4 × 4 × 2 in"}]'::jsonb, null, 0)
+on conflict (id) do update set attributes = excluded.attributes, specs = excluded.specs, components = excluded.components, sort_order = excluded.sort_order;
+insert into variants (id, product_id, attributes, price, stock, specs, components, sort_order)
+values ('tw-n-2', 'p-tw-n', '{"Loại":"Be 10 × 20 cm"}'::jsonb, 10000, 20, '[{"name":"Kích thước","value":"4 × 7¾ × 2 in"}]'::jsonb, null, 1)
+on conflict (id) do update set attributes = excluded.attributes, specs = excluded.specs, components = excluded.components, sort_order = excluded.sort_order;
+insert into variants (id, product_id, attributes, price, stock, specs, components, sort_order)
+values ('tw-n-3', 'p-tw-n', '{"Loại":"Be 15 × 20 cm"}'::jsonb, 12000, 20, '[{"name":"Kích thước","value":"6 × 7¾ × 2 in"}]'::jsonb, null, 2)
+on conflict (id) do update set attributes = excluded.attributes, specs = excluded.specs, components = excluded.components, sort_order = excluded.sort_order;
+insert into variants (id, product_id, attributes, price, stock, specs, components, sort_order)
+values ('tw-n-4', 'p-tw-n', '{"Loại":"Be 20 × 25 cm"}'::jsonb, 25000, 20, '[{"name":"Kích thước","value":"7¾ × 9¾ × 4 in"}]'::jsonb, null, 3)
+on conflict (id) do update set attributes = excluded.attributes, specs = excluded.specs, components = excluded.components, sort_order = excluded.sort_order;
+insert into variants (id, product_id, attributes, price, stock, specs, components, sort_order)
+values ('tw-n-5', 'p-tw-n', '{"Loại":"Xám nhạt gắn bàn"}'::jsonb, 137000, 20, '[]'::jsonb, null, 4)
+on conflict (id) do update set attributes = excluded.attributes, specs = excluded.specs, components = excluded.components, sort_order = excluded.sort_order;
+insert into variants (id, product_id, attributes, price, stock, specs, components, sort_order)
+values ('hh-o-dual', 'p-hh-o', '{"Loại":"Treo đôi"}'::jsonb, 319000, 20, '[{"name":"Màu","value":"Đen"}]'::jsonb, null, 0)
+on conflict (id) do update set attributes = excluded.attributes, specs = excluded.specs, components = excluded.components, sort_order = excluded.sort_order;
+insert into variants (id, product_id, attributes, price, stock, specs, components, sort_order)
+values ('hh-o-single', 'p-hh-o', '{"Loại":"Một móc, có móc giữ dây"}'::jsonb, 361000, 20, '[{"name":"Màu","value":"Đen"}]'::jsonb, null, 1)
+on conflict (id) do update set attributes = excluded.attributes, specs = excluded.specs, components = excluded.components, sort_order = excluded.sort_order;

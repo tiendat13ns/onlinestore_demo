@@ -1,40 +1,111 @@
-import { Link } from 'react-router-dom';
-import { artFor } from '../components/art';
-import ProductCard from '../components/ProductCard';
-import ProductImage from '../components/ProductImage';
-import { CatalogGate } from '../components/StatusMessages';
-import { FEATURED_IDS } from '../config';
+﻿import { Link } from 'react-router-dom';
+import { priceText } from '../components/ProductCard';
+import ProductSection from '../components/ProductSection';
+import { CatalogGate, ProductSkeleton } from '../components/StatusMessages';
+import { BRAND_NAME, CABLE_IDS, FEATURED_IDS, NEW_IDS, PROMO_ID } from '../config';
 import { useCatalog } from '../lib/CatalogContext';
 import { useTitle } from '../lib/useTitle';
 import { CATEGORIES } from '../types';
 
-const CATEGORY_IMAGES: Record<string, { src: string; alt: string; position: string; zoom?: string }> = {
-  deskmat: { src: '/images/leather-mat.jpg', alt: 'Tấm lót bàn và chuột trên mặt bàn trắng', position: '80% 85%' },
-  cable: { src: '/images/desk-cables.jpg', alt: 'Dây cáp uốn trên mặt bàn gỗ', position: '100% 20%', zoom: '1.6' },
-  bundle: { src: '/images/flatlay-keyboard.jpg', alt: 'Bàn phím và đồ dùng bày trên mặt bàn trắng', position: '20% 20%' },
+const CATEGORY_IMAGES: Record<string, { src: string; alt: string; position: string }> = {
+  deskmat: { src: '/images/deskmat-slate-xam.jpg', alt: 'Deskmat Slate màu xám', position: '50% 50%' },
+  cable: { src: '/images/kep-day-3-ranh.jpg', alt: 'Kẹp dây Clip 3 rãnh', position: '50% 50%' },
+  accessory: { src: '/images/keycap-veekos-roselatte-1.jpg', alt: 'Bộ keycap chuyển màu Rose Latte', position: '50% 50%' },
+  bundle: { src: '/images/combo-slate-clip.jpg', alt: 'Deskmat Slate, bàn phím, chuột và kẹp dây trên bàn gỗ', position: '28% 50%' },
 };
 
-const PERKS: [string, string][] = [
-  ['Thanh toán khi nhận hàng', 'Nhận hàng, kiểm tra rồi mới trả tiền.'],
-  ['Giao trong 2–5 ngày làm việc', 'Đơn được xử lý trong 1–2 ngày làm việc.'],
+const REASONS: [string, string][] = [
+  ['Chọn lọc, không chạy theo số lượng', 'Mỗi món trong cửa hàng có một công dụng rõ ràng cho góc bàn.'],
+  ['Thông tin rõ trước khi mua', 'Cỡ, màu, thông số và giá hiển thị đầy đủ ngay trên trang sản phẩm.'],
+  ['Thanh toán khi nhận hàng', 'Nhận hàng, kiểm tra rồi mới trả tiền. Giao trong 2–5 ngày làm việc.'],
   ['Đổi trả trong 7 ngày', 'Với sản phẩm lỗi hoặc giao sai mẫu, màu, cỡ.'],
 ];
 
-function HomeContent() {
+function HomeProducts() {
   const { catalog } = useCatalog();
-  const clip = catalog.products.find((p) => p.category === 'cable');
-  const featured = FEATURED_IDS.map((id) => catalog.products.find((p) => p.id === id)).filter((p) => p !== undefined);
+  const pick = (ids: string[]) => ids.map((id) => catalog.products.find((p) => p.id === id)).filter((p) => p !== undefined);
+  const featured = pick(FEATURED_IDS);
+  const newest = pick(NEW_IDS);
+  const cables = pick(CABLE_IDS);
+  const promo = catalog.products.find((p) => p.id === PROMO_ID);
+
+  return (
+    <>
+      <ProductSection id="best-h" title="Sản phẩm nổi bật" products={featured} moreTo="/products" moreLabel="Xem tất cả" />
+
+      <ProductSection id="new-h" title="Mới về" products={newest} moreTo="/products?category=accessory" moreLabel="Xem tất cả phụ kiện" />
+
+      <section className="perks" aria-labelledby="why-h">
+        <div className="wrap">
+          <h2 id="why-h" data-reveal>Vì sao chọn {BRAND_NAME}</h2>
+          <ul>
+            {REASONS.map(([title, text]) => (
+              <li key={title} data-reveal>
+                <h3>{title}</h3>
+                <p>{text}</p>
+              </li>
+            ))}
+          </ul>
+        </div>
+      </section>
+
+      {promo && (
+        <section className="section-tight wrap" aria-labelledby="promo-h">
+          <div className="promo" data-reveal>
+            <div className="promo-copy">
+              <h2 id="promo-h">{promo.name}</h2>
+              <p>{promo.shortDescription}</p>
+              <p className="promo-price">{priceText(promo, catalog.currency)}</p>
+              <Link className="btn btn-paper" to={`/products/${promo.slug}`}>
+                Xem bộ sản phẩm
+              </Link>
+            </div>
+            <div className="promo-img">
+              <img src={promo.images[0]?.src} alt={promo.images[0]?.alt ?? promo.name} loading="lazy" width="1400" height="933" />
+            </div>
+          </div>
+        </section>
+      )}
+
+      <ProductSection id="cable-h" title="Quản lý dây gọn gàng" products={cables} moreTo="/products?category=cable" moreLabel="Xem tất cả quản lý dây" />
+
+      <section className="section-tight wrap" aria-labelledby="about-h">
+        <div className="intro-card" data-reveal>
+          <img src="/images/logo.jpg" alt="" width="160" height="160" loading="lazy" />
+          <div>
+            <h2 id="about-h">Chỉ những thứ bạn thật sự dùng.</h2>
+            <p>
+              Deskmat cho chuột một mặt phẳng êm, kẹp dây giữ mỗi sợi đúng chỗ, khay và móc cho mọi thứ còn lại. Cỡ, màu và thông số ghi rõ trên từng trang sản phẩm.
+            </p>
+            <Link to="/about">Về {BRAND_NAME} ›</Link>
+          </div>
+        </div>
+      </section>
+    </>
+  );
+}
+
+function HomeContent() {
 
   return (
     <>
       <section className="hero" aria-labelledby="hero-h">
-        <img className="hero-img" src="/images/leather-mat.jpg" alt="" width="1920" height="1280" fetchPriority="high" />
-        <div className="hero-copy">
-          <h1 id="hero-h">Góc bàn gọn gàng, mỗi ngày.</h1>
-          <p>Deskmat và phụ kiện quản lý dây tối giản, thiết kế cho một góc làm việc dễ chịu.</p>
-          <Link className="btn btn-paper" to="/products">
-            Mua ngay
-          </Link>
+        <img
+          className="hero-img"
+          src="/images/banner.jpg"
+          alt="Tam Thái Tử Store: chú sóc bay màu trắng xanh bên góc bàn setup với deskmat, bàn phím và tai nghe"
+          width="2048"
+          height="768"
+          fetchPriority="high"
+        />
+        <div className="hero-copy wrap">
+          <h1 id="hero-h">Góc bàn gọn gàng, mỗi ngày.</h1>
+          <div>
+            <p>Deskmat, phụ kiện bàn phím và đồ quản lý dây, chọn để góc làm việc dễ chịu hơn.</p>
+            <Link className="btn" to="/products">
+              Mua ngay
+            </Link>
+          </div>
         </div>
       </section>
 
@@ -46,7 +117,7 @@ function HomeContent() {
             return (
               <li key={c.id} data-reveal style={{ '--d': `${i * 70}ms` } as React.CSSProperties}>
                 <Link to={`/products?category=${c.id}`} className="cat-tile">
-                  <img src={img.src} alt={img.alt} loading="lazy" style={{ objectPosition: img.position, scale: img.zoom, transformOrigin: '100% 0' }} />
+                  <img src={img.src} alt={img.alt} loading="lazy" style={{ objectPosition: img.position }} />
                   <span className="cat-name">{c.label}</span>
                 </Link>
               </li>
@@ -55,65 +126,14 @@ function HomeContent() {
         </ul>
       </section>
 
-      <section className="section wrap" aria-labelledby="best-h">
-        <div className="section-head">
-          <h2 id="best-h" data-reveal>Sản phẩm nổi bật</h2>
-          <Link to="/products" data-reveal>Xem tất cả</Link>
-        </div>
-        <div className="grid grid-4">
-          {featured.map((p) => (
-            <ProductCard key={p.id} product={p} />
-          ))}
-        </div>
-      </section>
-
-      <section className="perks" aria-label="Chính sách mua hàng">
-        <ul className="wrap">
-          {PERKS.map(([title, text]) => (
-            <li key={title} data-reveal>
-              <h3>{title}</h3>
-              <p>{text}</p>
-            </li>
-          ))}
-        </ul>
-      </section>
-
-      <section className="banner" aria-labelledby="banner-h">
-        {clip && (
-          <div className="banner-art">
-            <ProductImage image={clip.images[0]} art={artFor(clip, undefined, 0)} />
-          </div>
-        )}
-        <div className="banner-copy">
-          <h2 id="banner-h" data-reveal>Dây gọn, bàn thoáng.</h2>
-          <p data-reveal>Kẹp silicone nhỏ giữ dây sạc, dây tai nghe và dây chuột đúng chỗ.</p>
-          <Link className="btn btn-paper" to="/products?category=cable" data-reveal>
-            Xem kẹp dây
-          </Link>
-        </div>
-      </section>
-
-      <section className="section wrap about" aria-labelledby="about-h">
-        <h2 id="about-h" data-reveal>Chỉ những thứ bạn thật sự dùng.</h2>
-        <div>
-          <p data-reveal>
-            Deskmat cho chuột một mặt phẳng êm và giữ bàn phím đứng yên. Kẹp dây giữ mỗi sợi đúng chỗ. Mỗi sản phẩm được vẽ theo kích thước thật, nên cỡ bạn chọn
-            trên trang chính là cỡ bạn nhận.
-          </p>
-          <p data-reveal>
-            <Link to="/about">Về chúng tôi</Link>
-          </p>
-        </div>
-      </section>
+      <CatalogGate fallback={<ProductSkeleton rows={3} />}>
+        <HomeProducts />
+      </CatalogGate>
     </>
   );
 }
 
 export default function Home() {
   useTitle('Deskmat và phụ kiện cho góc bàn gọn gàng');
-  return (
-    <CatalogGate>
-      <HomeContent />
-    </CatalogGate>
-  );
+  return <HomeContent />;
 }

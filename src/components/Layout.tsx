@@ -1,25 +1,13 @@
-import { useEffect, useRef, useState } from 'react';
-import { Link, NavLink, Outlet, useLocation } from 'react-router-dom';
+import { useEffect } from 'react';
+import { Link, Outlet, useLocation } from 'react-router-dom';
 import { BRAND_NAME, COURSE_CREDIT } from '../config';
-import { useCart } from '../lib/CartContext';
+import SiteHeader from './SiteHeader';
 
 export default function Layout() {
-  const { count } = useCart();
   const { pathname } = useLocation();
-  const [menuOpen, setMenuOpen] = useState(false);
-  const menuButton = useRef<HTMLButtonElement>(null);
-  const header = useRef<HTMLElement>(null);
-  const prevCount = useRef(count);
-  const [bump, setBump] = useState(0);
   const isHome = pathname === '/';
 
   useEffect(() => {
-    if (count > prevCount.current) setBump((b) => b + 1);
-    prevCount.current = count;
-  }, [count]);
-
-  useEffect(() => {
-    setMenuOpen(false);
     window.scrollTo(0, 0);
   }, [pathname]);
 
@@ -47,24 +35,6 @@ export default function Layout() {
     };
   }, []);
 
-  useEffect(() => {
-    if (!menuOpen) return;
-    const close = () => {
-      setMenuOpen(false);
-      menuButton.current?.focus();
-    };
-    const onKey = (e: KeyboardEvent) => e.key === 'Escape' && close();
-    const onPointer = (e: MouseEvent) => {
-      if (header.current && !header.current.contains(e.target as Node)) setMenuOpen(false);
-    };
-    document.addEventListener('keydown', onKey);
-    document.addEventListener('mousedown', onPointer);
-    return () => {
-      document.removeEventListener('keydown', onKey);
-      document.removeEventListener('mousedown', onPointer);
-    };
-  }, [menuOpen]);
-
   return (
     <>
       <a className="skip-link" href="#main">
@@ -73,38 +43,12 @@ export default function Layout() {
 
       <p className="announce">Thanh toán khi nhận hàng · Giao toàn quốc trong 2–5 ngày làm việc</p>
 
-      <header className="site-header" ref={header}>
-        <div className="header-row">
-          <Link to="/" className="brand">
-            {BRAND_NAME}
-          </Link>
-          <button
-            ref={menuButton}
-            type="button"
-            className="btn btn-secondary menu-toggle"
-            aria-expanded={menuOpen}
-            aria-controls="primary-nav"
-            onClick={() => setMenuOpen((o) => !o)}
-          >
-            {menuOpen ? 'Đóng' : 'Menu'}
-          </button>
-          <nav id="primary-nav" aria-label="Điều hướng chính" className={menuOpen ? 'open' : ''}>
-            <NavLink to="/" end>
-              Trang chủ
-            </NavLink>
-            <NavLink to="/products">Sản phẩm</NavLink>
-            <NavLink to="/about">Về chúng tôi</NavLink>
-          </nav>
-          <NavLink to="/cart" className="cart-link">
-            <span>
-              Giỏ hàng (<span key={bump} className={bump ? 'cart-count bump' : 'cart-count'}>{count}</span>)
-            </span>
-          </NavLink>
-        </div>
-      </header>
+      <SiteHeader />
 
       <main id="main" tabIndex={-1} className={isHome ? 'main-full' : 'container'}>
-        <Outlet />
+        <div key={pathname} className="page">
+          <Outlet />
+        </div>
       </main>
 
       <footer className="site-footer">
@@ -119,6 +63,7 @@ export default function Layout() {
               <li><Link to="/products">Tất cả sản phẩm</Link></li>
               <li><Link to="/products?category=deskmat">Deskmat</Link></li>
               <li><Link to="/products?category=cable">Quản lý dây</Link></li>
+              <li><Link to="/products?category=accessory">Phụ kiện bàn</Link></li>
               <li><Link to="/products?category=bundle">Bộ sản phẩm</Link></li>
             </ul>
           </nav>
@@ -138,11 +83,8 @@ export default function Layout() {
             © 2026 {BRAND_NAME} · {COURSE_CREDIT}
           </p>
           <p className="small credits">
-            Ảnh qua Wikimedia Commons:{' '}
-            <a href="https://commons.wikimedia.org/wiki/File:Apple_mouse_and_keyboard_(Unsplash).jpg">Grovemade</a> (CC0),{' '}
-            <a href="https://commons.wikimedia.org/wiki/File:A_computer_keyboard_and_mouse_are_positioned_on_a_wooden_des.jpg">Shixart1985</a>{' '}
-            (<a href="https://creativecommons.org/licenses/by/2.0">CC BY 2.0</a>),{' '}
-            <a href="https://commons.wikimedia.org/wiki/File:Top_Workspace_Office.jpg">Kristin Hardwick</a> (CC0).
+            Trang demo cho môn học, không bán hàng thật. Một số ảnh sản phẩm tham khảo từ trang của hãng và nhà bán (Logitech, Razer, AKKO,
+            MonsGeek, Veekos, PBTfans, HyperWork, Brainwavz, StarTech, Baseus, UGREEN, IKEA), thuộc về chủ sở hữu tương ứng.
           </p>
         </div>
       </footer>

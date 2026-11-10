@@ -5,7 +5,13 @@ import { isPersistent, readItem, removeItem, writeItem } from './storage';
 
 const LINES_KEY = 'gsd.cart.v1';
 const ORDER_KEY = 'gsd.order.v1';
-const CODES_KEY = 'gsd.order-codes.v1';
+const CODES_KEY = 'gsd.order-refs.v1';
+
+/** Đơn đã đặt trên trình duyệt này: cần cả mã lẫn SĐT vì tra cứu yêu cầu cả hai. */
+export interface OrderRef {
+  code: string;
+  phone: string;
+}
 
 type AddResult = { ok: true } | { ok: false; error: string };
 
@@ -16,7 +22,9 @@ interface CartApi {
   persistent: boolean;
   order: Order | null;
   /** Mã các đơn đã đặt trong phiên (không có tài khoản nên trình duyệt tự nhớ). */
-  orderCodes: string[];
+  orderRefs: OrderRef[];
+  /** Nhớ thêm một đơn tra cứu thành công để lần sau tự hiện. */
+  rememberOrder: (ref: OrderRef) => void;
   addItem: (variantId: string, quantity: number) => AddResult;
   setQuantity: (variantId: string, quantity: number) => void;
   removeLine: (variantId: string) => void;
@@ -44,10 +52,12 @@ function parseLines(raw: string | null): CartLine[] {
   }
 }
 
-function parseCodes(raw: string | null): string[] {
+function parseRefs(raw: string | null): OrderRef[] {
   try {
     const data: unknown = raw ? JSON.parse(raw) : [];
-    return Array.isArray(data) ? data.filter((c): c is string => typeof c === 'string') : [];
+    return Array.isArray(data)
+      ? data.filter((r): r is OrderRef => typeof r?.code === 'string' && typeof r?.phone === 'string' && r.phone !== '')
+      : [];
   } catch {
     return [];
   }
@@ -67,7 +77,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
   // Chỉ lưu ID + số lượng; giá và tên luôn đối chiếu lại catalog.
   const [lines, setLines] = useState<CartLine[]>(() => parseLines(readItem(LINES_KEY)));
   const [order, setOrder] = useState<Order | null>(() => parseOrder(readItem(ORDER_KEY)));
-  const [orderCodes, setOrderCodes] = useState<string[]>(() => parseCodes(readItem(CODES_KEY)));
+  const [orderRefs, setOrderRefs] = useState<OrderRef[]>(() => parseRefs(readItem(CODES_KEY)));
   const [persistent, setPersistent] = useState(isPersistent);
 
   useEffect(() => {
@@ -76,8 +86,8 @@ export function CartProvider({ children }: { children: ReactNode }) {
   }, [lines]);
 
   useEffect(() => {
-    writeItem(CODES_KEY, JSON.stringify(orderCodes));
-  }, [orderCodes]);
+    writeItem(CODES_KEY, JSON.stringify(orderRefs));
+  }, [orderRefs]);
 
   const addItem = useCallback(
     (variantId: string, quantity: number): AddResult => {
@@ -110,12 +120,16 @@ export function CartProvider({ children }: { children: ReactNode }) {
     try {
       writeItem(ORDER_KEY, JSON.stringify(next));
       setOrder(next);
-      setOrderCodes((prev) => [next.code, ...prev.filter((c) => c !== next.code)]);
+      if (next.customerPhone) setOrderRefs((prev) => [{ code: next.code, phone: next.customerPhone! }, ...prev.filter((r) => r.code !== next.code)]);
       setPersistent(isPersistent());
       return true;
     } catch {
       return false;
     }
+  }, []);
+
+  const rememberOrder = useCallback((ref: OrderRef) => {
+    setOrderRefs((prev) => [ref, ...prev.filter((r) => r.code !== ref.code)]);
   }, []);
 
   const clearLocalData = useCallback(() => {
@@ -124,14 +138,14 @@ export function CartProvider({ children }: { children: ReactNode }) {
     removeItem(CODES_KEY);
     setLines([]);
     setOrder(null);
-    setOrderCodes([]);
+    setOrderRefs([]);
   }, []);
 
   const count = useMemo(() => lines.reduce((sum, l) => sum + l.quantity, 0), [lines]);
 
   const value = useMemo(
-    () => ({ lines, count, persistent, order, orderCodes, addItem, setQuantity, removeLine, clearLines, saveOrder, clearLocalData }),
-    [lines, count, persistent, order, orderCodes, addItem, setQuantity, removeLine, clearLines, saveOrder, clearLocalData],
+    () => ({ lines, count, persistent, order, orderRefs, rememberOrder, addItem, setQuantity, removeLine, clearLines, saveOrder, clearLocalData }),
+    [lines, count, persistent, order, orderRefs, rememberOrder, addItem, setQuantity, removeLine, clearLines, saveOrder, clearLocalData],
   );
   return <CartContext.Provider value={value}>{children}</CartContext.Provider>;
 }

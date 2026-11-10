@@ -1,4 +1,4 @@
-# Nook Studio
+# Tam Thái Tử Store
 
 Cửa hàng deskmat, phụ kiện quản lý dây và bộ sản phẩm cho góc làm việc. Tên thương hiệu đổi ở [src/config.ts](src/config.ts). Đặc tả: [OnlineStore_Requirements.md](OnlineStore_Requirements.md).
 

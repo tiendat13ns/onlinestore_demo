@@ -76,6 +76,8 @@ function ProductView({ product }: { product: Product }) {
       else dropped.push(a.name);
     }
     setSelection(next);
+    const matched = product.images.findIndex((img) => img.match && Object.entries(img.match).every(([k, v]) => (Array.isArray(v) ? v : [v]).includes(next[k])));
+    if (matched >= 0) setImageIndex(matched);
     setConflict(dropped.length ? `Tổ hợp này không tồn tại; đã bỏ chọn ${dropped.join(', ')}. Vui lòng chọn lại.` : null);
     setAttrErrors({});
     setNotice(null);
@@ -140,6 +142,7 @@ function ProductView({ product }: { product: Product }) {
           <ProductImage image={image} art={artFor(product, variant, imageIndex)} className="gallery-main" />
           <p className="small muted">
             Ảnh {imageIndex + 1}/{product.images.length}
+            {!image?.src && ' · Hình minh họa theo màu và cỡ đã chọn'}
           </p>
           <div className="thumbs">
             {product.images.map((img, i) => (

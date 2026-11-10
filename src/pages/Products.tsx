@@ -2,6 +2,7 @@ import { useEffect, useMemo } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import ProductCard from '../components/ProductCard';
 import { CatalogGate } from '../components/StatusMessages';
+import { SUBGROUPS } from '../config';
 import { minPrice, useCatalog } from '../lib/CatalogContext';
 import { useTitle } from '../lib/useTitle';
 import { CATEGORIES, isCategory, type CategoryId, type Product } from '../types';
@@ -15,6 +16,11 @@ const SORTS: { id: Sort; label: string }[] = [
 ];
 
 /** Sản phẩm chưa có giá xếp cuối ở cả hai chiều; bằng giá giữ thứ tự catalog. */
+/** Bỏ dấu và chữ hoa để "keo day" khớp "Kẹp dây". */
+function fold(text: string): string {
+  return text.normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/đ/g, 'd').replace(/Đ/g, 'd').toLowerCase().trim();
+}
+
 function sortProducts(products: Product[], sort: Sort): Product[] {
   const dir = sort === 'price-asc' ? 1 : sort === 'price-desc' ? -1 : 0;
   return products
@@ -35,6 +41,9 @@ function ProductList() {
 
   const rawCategory = params.get('category');
   const category: CategoryId | null = isCategory(rawCategory) ? rawCategory : null;
+  const groups = (category && SUBGROUPS[category]) || [];
+  const group = groups.find((g) => g.id === params.get('group')) ?? null;
+  const q = (params.get('q') ?? '').trim();
   const rawSort = params.get('sort');
   const sort: Sort = SORTS.some((s) => s.id === rawSort) ? (rawSort as Sort) : 'default';
 
@@ -48,13 +57,25 @@ function ProductList() {
   }, [rawCategory, category, params, setParams]);
 
   const visible = useMemo(() => {
-    const filtered = category ? catalog.products.filter((p) => p.category === category) : catalog.products;
-    return sortProducts(filtered, sort);
-  }, [catalog.products, category, sort]);
+    const byCategory = category ? catalog.products.filter((p) => p.category === category) : catalog.products;
+    const filtered = group ? byCategory.filter((p) => group.productIds.includes(p.id)) : byCategory;
+    const terms = fold(q).split(' ').filter(Boolean);
+    const searched = terms.length
+      ? filtered.filter((p) => {
+          const haystack = fold(
+            [p.name, p.shortDescription, CATEGORIES.find((c) => c.id === p.category)?.label ?? '', ...p.variants.flatMap((v) => Object.values(v.attributes))].join(' '),
+          );
+          return terms.every((t) => haystack.includes(t));
+        })
+      : filtered;
+    return sortProducts(searched, sort);
+  }, [catalog.products, category, group, q, sort]);
 
-  const linkFor = (id: CategoryId | null) => {
+  const linkFor = (id: CategoryId | null, groupId: string | null = null, keepQ = true) => {
     const next = new URLSearchParams();
     if (id) next.set('category', id);
+    if (id && groupId) next.set('group', groupId);
+    if (keepQ && q) next.set('q', q);
     if (sort !== 'default') next.set('sort', sort);
     const qs = next.toString();
     return qs ? `/products?${qs}` : '/products';
@@ -80,8 +101,24 @@ function ProductList() {
         ))}
       </nav>
 
+      {category && groups.length > 0 && (
+        <nav aria-label="Lọc theo loại" className="filters filters-sub">
+          <Link to={linkFor(category)} aria-current={group === null ? 'true' : undefined}>
+            Tất cả loại
+          </Link>
+          {groups.map((g) => (
+            <Link key={g.id} to={linkFor(category, g.id)} aria-current={group?.id === g.id ? 'true' : undefined}>
+              {g.label}
+            </Link>
+          ))}
+        </nav>
+      )}
+
       <div className="results-bar">
-        <p role="status">{visible.length} sản phẩm</p>
+        <p role="status">
+          {visible.length} sản phẩm{q ? ` cho “${q}”` : ''}{' '}
+          {q && <Link to={linkFor(category, group?.id ?? null, false)}>Xóa tìm kiếm</Link>}
+        </p>
         <label>
           Sắp xếp{' '}
           <select value={sort} onChange={(e) => onSort(e.target.value)}>

@@ -40,7 +40,7 @@ try {
 
   const o = await call('POST', '/api/orders', {
     lines: [{ variantId: 'bd-d-std', quantity: 1 }, { variantId: 'dm-a-m-black', quantity: 2 }],
-    customer: { name: 'Test', phone: '0900000000', address: 'Dia chi' },
+    customer: { name: 'Test', phone: '0900000000', address: 'So 1 Dai Co Viet, Hai Ba Trung, Ha Noi' },
   });
   check('pg: đặt đơn nhiều dòng → 201', o.status === 201, o.body);
   check('pg: subtotal đúng (319000 + 2×249000)', o.body.subtotal === 319000 + 2 * 249000, o.body.subtotal);
@@ -48,7 +48,7 @@ try {
 
   const over = await call('POST', '/api/orders', {
     lines: [{ variantId: 'dm-a-m-grey', quantity: 1 }, { variantId: 'cb-c-3', quantity: 50 }],
-    customer: { name: 'Test', phone: '1', address: 'x' },
+    customer: { name: 'Test', phone: '0900000002', address: 'So 3 Dai Co Viet, Hai Ba Trung, Ha Noi' },
   });
   check('pg: quá tồn kho → 409', over.status === 409, over.body);
   const prods = await call('GET', '/api/admin/products', undefined, token);
@@ -58,6 +58,9 @@ try {
   const orders = await call('GET', '/api/admin/orders', undefined, token);
   check('pg: admin thấy đơn kèm dòng hàng', orders.body.length === 1 && orders.body[0].lines.length === 2, orders.body);
 
+  const looked = await call('POST', '/api/orders/lookup', { code: o.body.code, phone: '090 000 0000' });
+  check('pg: tra cứu bằng mã + SĐT', looked.status === 200 && looked.body.code === o.body.code && looked.body.customerAddress?.startsWith('So 1'), looked.body);
+  check('pg: tra cứu sai SĐT → 404', (await call('POST', '/api/orders/lookup', { code: o.body.code, phone: '0911111111' })).status === 404);
   const cancel = await call('PATCH', `/api/admin/orders/${o.body.code}/status`, { status: 'cancelled' }, token);
   check('pg: hủy đơn', cancel.status === 200 && cancel.body.status === 'cancelled', cancel.body);
   const after = await call('GET', '/api/admin/products', undefined, token);
@@ -68,7 +71,7 @@ try {
   await call('PATCH', '/api/admin/variants/cb-c-5', { stock: 2 }, token);
   const burst = await Promise.all(
     Array.from({ length: 5 }, () =>
-      call('POST', '/api/orders', { lines: [{ variantId: 'cb-c-5', quantity: 1 }], customer: { name: 'T', phone: '1', address: 'x' } }),
+      call('POST', '/api/orders', { lines: [{ variantId: 'cb-c-5', quantity: 1 }], customer: { name: 'Tester', phone: '0900000001', address: 'So 2 Dai Co Viet, Hai Ba Trung, Ha Noi' } }),
     ),
   );
   const ok = burst.filter((x) => x.status === 201).length;
