@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState, type FormEvent } from 'react';
-import { Link, useSearchParams } from 'react-router-dom';
+import { Link, useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import OrderDetails from '../components/OrderDetails';
 import { ApiError, api } from '../lib/api';
 import { useCart } from '../lib/CartContext';
@@ -13,6 +13,10 @@ export default function Orders() {
   useTitle('Tra cứu đơn hàng');
   const { orderRefs, rememberOrder } = useCart();
   const [params] = useSearchParams();
+  const location = useLocation();
+  const navigate = useNavigate();
+  // Dữ liệu từ khối tra cứu nhanh ở trang chủ (đi qua state của router, không nằm trên URL).
+  const handoff = useRef(location.state as { code?: string; phone?: string } | null);
 
   const [orders, setOrders] = useState<Record<string, Order>>({});
   const [loadErrors, setLoadErrors] = useState<Record<string, string>>({});
@@ -65,6 +69,25 @@ export default function Orders() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [orderRefs]);
 
+  const runLookup = async (rawCode: string, rawPhone: string) => {
+    setBusy(true);
+    try {
+      const order = await api.lookupOrder(normalizeOrderCode(rawCode), rawPhone);
+      setOrders((prev) => ({ ...prev, [order.code]: order }));
+      setLoadErrors(({ [order.code]: _, ...rest }) => rest);
+      rememberOrder({ code: order.code, phone: order.customerPhone ?? normalizePhone(rawPhone) ?? rawPhone });
+      setNotice(`Đã tìm thấy đơn ${order.code}.`);
+      setCode('');
+      setPhone('');
+    } catch (err) {
+      setCode(rawCode);
+      setPhone(rawPhone);
+      setErrors({ form: message(err) });
+    } finally {
+      setBusy(false);
+    }
+  };
+
   const onLookup = async (e: FormEvent) => {
     e.preventDefault();
     setNotice(null);
@@ -77,22 +100,19 @@ export default function Orders() {
       (next.code ? codeInput : phoneInput).current?.focus();
       return;
     }
-
-    setBusy(true);
-    try {
-      const order = await api.lookupOrder(normalizeOrderCode(code), phone);
-      setOrders((prev) => ({ ...prev, [order.code]: order }));
-      setLoadErrors(({ [order.code]: _, ...rest }) => rest);
-      rememberOrder({ code: order.code, phone: order.customerPhone ?? normalizePhone(phone) ?? phone });
-      setNotice(`Đã tìm thấy đơn ${order.code}.`);
-      setCode('');
-      setPhone('');
-    } catch (err) {
-      setErrors({ form: message(err) });
-    } finally {
-      setBusy(false);
-    }
+    await runLookup(code, phone);
   };
+
+  // Tự tra cứu khi đến từ khối tra cứu nhanh; xóa state để tải lại trang không tra cứu lần nữa.
+  useEffect(() => {
+    const h = handoff.current;
+    handoff.current = null;
+    if (h?.code && h?.phone) {
+      navigate(location.pathname, { replace: true, state: null });
+      void runLookup(h.code, h.phone);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const cancel = async (order: Order) => {
     if (!order.customerPhone) return;

@@ -1,5 +1,6 @@
 ﻿import { Link } from 'react-router-dom';
 import { priceText } from '../components/ProductCard';
+import OrderLookupBand from '../components/OrderLookupBand';
 import ProductSection from '../components/ProductSection';
 import { CatalogGate, ProductSkeleton } from '../components/StatusMessages';
 import { BRAND_NAME, CABLE_IDS, FEATURED_IDS, NEW_IDS, PROMO_ID } from '../config';
@@ -48,6 +49,8 @@ function HomeProducts() {
           </ul>
         </div>
       </section>
+
+      <OrderLookupBand />
 
       {promo && (
         <section className="section-tight wrap" aria-labelledby="promo-h">

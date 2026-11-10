@@ -10,7 +10,7 @@ Bạn cần tự điền **3 giá trị bí mật**: `DATABASE_URL`, `ADMIN_PASS
 1. Vào [supabase.com](https://supabase.com), tạo project mới. Chọn vùng gần bạn (ví dụ Singapore). **Ghi lại mật khẩu database** bạn đặt lúc tạo.
 2. Mở **SQL Editor**, tạo query mới:
    1. Dán toàn bộ [supabase/schema.sql](../supabase/schema.sql), bấm **Run**.
-   2. Dán toàn bộ [supabase/seed.sql](../supabase/seed.sql) (15 sản phẩm mẫu, mỗi mẫu tồn kho 20), bấm **Run**.
+   2. Dán toàn bộ [supabase/seed.sql](../supabase/seed.sql) (4 sản phẩm mẫu, mỗi mẫu tồn kho 20), bấm **Run**.
 3. Lấy chuỗi kết nối: bấm **Connect** (đầu trang project), chọn **Transaction pooler**, sao chép chuỗi `URI`.
    Dạng: `postgresql://postgres.<mã-project>:[YOUR-PASSWORD]@aws-0-<vùng>.pooler.supabase.com:6543/postgres`
    - Thay `[YOUR-PASSWORD]` bằng mật khẩu database. Nếu mật khẩu có ký tự đặc biệt (`@ : / ? #`) phải mã hóa URL (ví dụ `@` thành `%40`).
@@ -76,9 +76,7 @@ npm run test:pg     # cùng bộ kiểm thử qua driver pg thật
 ```
 
 Sau khi sửa [src/data/catalog.ts](../src/data/catalog.ts), chạy `npm run db:seed-sql` để sinh lại `supabase/seed.sql`.
-File seed chạy lại được nhiều lần: cập nhật tên, mô tả, ảnh, thông số và thêm biến thể mới, nhưng **không ghi đè giá và tồn kho** đã chỉnh trong `/admin`. Sau khi đổi `catalog.ts`, chạy `npm run db:seed-sql` rồi dán lại toàn bộ `supabase/seed.sql` vào Supabase SQL Editor (sản phẩm đã bỏ khỏi catalog không tự bị xóa).
-
-Muốn xem catalog mới ngay trên máy mà không đụng Supabase: `npm run dev:local` (database trong bộ nhớ, web ở cổng Vite kế tiếp, mật khẩu admin `local`).
+File seed không ghi đè giá và tồn kho đã chỉnh trong `/admin` (`on conflict do nothing`); muốn nạp lại sản phẩm thì xóa dòng đó trong bảng tương ứng trước.
 
 ## 5. Xử lý sự cố
 

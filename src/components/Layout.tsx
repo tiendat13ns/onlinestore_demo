@@ -70,7 +70,7 @@ export default function Layout() {
           <nav aria-label="Hỗ trợ">
             <h2>Hỗ trợ</h2>
             <ul>
-              <li><Link to="/orders">Đơn hàng của tôi</Link></li>
+              <li><Link to="/orders">Tra cứu đơn hàng</Link></li>
               <li><Link to="/policies/shipping">Giao hàng</Link></li>
               <li><Link to="/policies/returns">Đổi trả</Link></li>
               <li><Link to="/policies/privacy">Quyền riêng tư</Link></li>

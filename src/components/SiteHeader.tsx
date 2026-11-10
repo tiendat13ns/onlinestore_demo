@@ -13,12 +13,6 @@ const BagIcon = () => (
     <path d="M9 8a3 3 0 0 1 6 0" />
   </svg>
 );
-const BoxIcon = () => (
-  <svg {...icon}>
-    <path d="m12 3 8 4.5v9L12 21l-8-4.5v-9L12 3Z" />
-    <path d="m4 7.5 8 4.5 8-4.5M12 12v9" />
-  </svg>
-);
 const Chevron = () => (
   <svg className="chevron" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
     <path d="m6 9 6 6 6-6" />
@@ -147,16 +141,13 @@ export default function SiteHeader() {
             <NavLink to="/about" className="nav-link">
               Về chúng tôi
             </NavLink>
-            <NavLink to="/orders" className="nav-link nav-orders-text">
-              Đơn hàng của tôi
+            <NavLink to="/orders" className="nav-link">
+              Tra cứu đơn hàng
             </NavLink>
           </nav>
 
           <div className="header-tools">
             <SearchBox className="search-desktop" />
-            <NavLink to="/orders" className="icon-btn icon-orders" aria-label="Đơn hàng của tôi">
-              <BoxIcon />
-            </NavLink>
             <NavLink to="/cart" className="icon-btn" aria-label={`Giỏ hàng, ${count} sản phẩm`}>
               <BagIcon />
               <span key={bump} className={bump ? 'cart-badge bump' : 'cart-badge'} data-empty={count === 0}>
