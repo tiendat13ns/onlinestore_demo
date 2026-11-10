@@ -1,17 +1,12 @@
-import { useEffect, useRef, useState, type FormEvent } from 'react';
-import { Link, NavLink, useLocation, useNavigate, useSearchParams } from 'react-router-dom';
+import { useEffect, useRef, useState } from 'react';
+import { Link, NavLink, useLocation } from 'react-router-dom';
 import { BRAND_NAME, MEGA_MENU, MEGA_TILES } from '../config';
 import { useCart } from '../lib/CartContext';
 import { useCatalog } from '../lib/CatalogContext';
+import SearchBox from './SearchBox';
 
 const icon = { width: 22, height: 22, viewBox: '0 0 24 24', fill: 'none', stroke: 'currentColor', strokeWidth: 1.8, strokeLinecap: 'round', strokeLinejoin: 'round', 'aria-hidden': true } as const;
 
-const SearchIcon = () => (
-  <svg {...icon} width={20} height={20}>
-    <circle cx="11" cy="11" r="7" />
-    <path d="m20 20-3.5-3.5" />
-  </svg>
-);
 const BagIcon = () => (
   <svg {...icon}>
     <path d="M6 8h12l-1 12H7L6 8Z" />
@@ -29,31 +24,6 @@ const Chevron = () => (
     <path d="m6 9 6 6 6-6" />
   </svg>
 );
-
-function SearchForm({ className }: { className: string }) {
-  const navigate = useNavigate();
-  const [params] = useSearchParams();
-  const { pathname } = useLocation();
-  const [q, setQ] = useState('');
-
-  // Ô tìm kiếm phản ánh từ khóa đang lọc ở trang Sản phẩm.
-  useEffect(() => {
-    setQ(pathname === '/products' ? (params.get('q') ?? '') : '');
-  }, [pathname, params]);
-
-  const onSubmit = (e: FormEvent) => {
-    e.preventDefault();
-    const term = q.trim();
-    navigate(term ? `/products?q=${encodeURIComponent(term)}` : '/products');
-  };
-
-  return (
-    <form className={`search ${className}`} role="search" onSubmit={onSubmit}>
-      <SearchIcon />
-      <input type="search" value={q} onChange={(e) => setQ(e.target.value)} placeholder="Tìm sản phẩm…" aria-label="Tìm sản phẩm" autoComplete="off" />
-    </form>
-  );
-}
 
 export default function SiteHeader() {
   const { count } = useCart();
@@ -121,7 +91,7 @@ export default function SiteHeader() {
           </Link>
 
           <nav id="primary-nav" aria-label="Điều hướng chính" className={menuOpen ? 'open' : ''}>
-            <SearchForm className="search-mobile" />
+            <SearchBox className="search-mobile" />
             <NavLink to="/" end className="nav-link nav-home">
               Trang chủ
             </NavLink>
@@ -183,7 +153,7 @@ export default function SiteHeader() {
           </nav>
 
           <div className="header-tools">
-            <SearchForm className="search-desktop" />
+            <SearchBox className="search-desktop" />
             <NavLink to="/orders" className="icon-btn icon-orders" aria-label="Đơn hàng của tôi">
               <BoxIcon />
             </NavLink>

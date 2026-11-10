@@ -4,6 +4,7 @@ import ProductCard from '../components/ProductCard';
 import { CatalogGate } from '../components/StatusMessages';
 import { SUBGROUPS } from '../config';
 import { minPrice, useCatalog } from '../lib/CatalogContext';
+import { matchProducts } from '../lib/search';
 import { useTitle } from '../lib/useTitle';
 import { CATEGORIES, isCategory, type CategoryId, type Product } from '../types';
 
@@ -16,11 +17,6 @@ const SORTS: { id: Sort; label: string }[] = [
 ];
 
 /** Sản phẩm chưa có giá xếp cuối ở cả hai chiều; bằng giá giữ thứ tự catalog. */
-/** Bỏ dấu và chữ hoa để "keo day" khớp "Kẹp dây". */
-function fold(text: string): string {
-  return text.normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/đ/g, 'd').replace(/Đ/g, 'd').toLowerCase().trim();
-}
-
 function sortProducts(products: Product[], sort: Sort): Product[] {
   const dir = sort === 'price-asc' ? 1 : sort === 'price-desc' ? -1 : 0;
   return products
@@ -59,15 +55,7 @@ function ProductList() {
   const visible = useMemo(() => {
     const byCategory = category ? catalog.products.filter((p) => p.category === category) : catalog.products;
     const filtered = group ? byCategory.filter((p) => group.productIds.includes(p.id)) : byCategory;
-    const terms = fold(q).split(' ').filter(Boolean);
-    const searched = terms.length
-      ? filtered.filter((p) => {
-          const haystack = fold(
-            [p.name, p.shortDescription, CATEGORIES.find((c) => c.id === p.category)?.label ?? '', ...p.variants.flatMap((v) => Object.values(v.attributes))].join(' '),
-          );
-          return terms.every((t) => haystack.includes(t));
-        })
-      : filtered;
+    const searched = q ? matchProducts(filtered, q).map((m) => m.product) : filtered;
     return sortProducts(searched, sort);
   }, [catalog.products, category, group, q, sort]);
 

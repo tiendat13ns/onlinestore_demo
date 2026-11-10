@@ -568,3 +568,24 @@ input[aria-invalid='true'], textarea[aria-invalid='true'] { border: 2px solid va
 
 /* Màn hình rất rộng hoặc khi thu nhỏ trang: banner thành một khối bo góc giữa cột, không kéo giãn theo màn hình. */
 @media (min-width: 1441px) { .hero { margin-top: 0.75rem; border-radius: var(--radius); overflow: hidden; } }
+
+/* Gợi ý tìm kiếm */
+.suggest { position: absolute; z-index: 60; top: calc(100% + 8px); right: 0; width: max(100%, 380px); max-width: calc(100vw - 2 * var(--margin)); padding: 0.5rem; border-radius: var(--radius); background: var(--paper); color: var(--ink); box-shadow: 0 18px 48px rgba(14, 34, 80, 0.2); /* taste-skill-ignore: danh sách nổi trên trang */ }
+.suggest ul { list-style: none; margin: 0; padding: 0; }
+.suggest-title { padding: 0.4rem 0.75rem; color: var(--muted); font-size: var(--step-small); }
+.suggest-row { display: flex; align-items: center; gap: 0.75rem; min-height: 52px; padding: 0.4rem 0.75rem; border-radius: var(--radius-sm); cursor: pointer; transition: background-color 120ms var(--ease-out); }
+.suggest-row.is-active { background: var(--surface); }
+.suggest-product { display: grid; grid-template-columns: 44px 1fr auto; }
+.suggest-thumb, .suggest-thumb img { width: 44px; height: 44px; border-radius: var(--radius-sm); object-fit: cover; }
+.suggest-thumb.art-frame, .suggest-thumb.img-fallback { aspect-ratio: 1; }
+.suggest-text { display: grid; min-width: 0; }
+.suggest-name { font-weight: 500; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.suggest-meta { color: var(--muted); font-size: var(--step-small); }
+.suggest-price { color: var(--muted); font-size: var(--step-small); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.suggest-keyword { color: var(--ink); }
+.suggest-keyword svg { color: var(--muted); flex: none; position: static; }
+.suggest-all { color: var(--accent); font-weight: 500; }
+.suggest-empty { margin: 0; padding: 0.6rem 0.75rem; color: var(--muted); max-width: none; }
+.search svg { z-index: 1; }
+.suggest svg { position: static; }
+@media (max-width: 899px) { .suggest { left: 0; right: 0; width: auto; max-width: none; } }
