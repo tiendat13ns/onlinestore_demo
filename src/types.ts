@@ -89,7 +89,26 @@ export interface OrderLine {
 
 export type OrderStatus = 'pending' | 'confirmed' | 'shipping' | 'completed' | 'cancelled';
 
+/** Tên trạng thái hiển thị cho khách: đi theo đúng hành trình của một đơn hàng. */
 export const STATUS_LABELS: Record<OrderStatus, string> = {
+  pending: 'Đặt hàng thành công',
+  confirmed: 'Shop liên hệ xác nhận đơn hàng',
+  shipping: 'Đơn hàng đang trên đường vận chuyển',
+  completed: 'Đơn hàng đã hoàn thành',
+  cancelled: 'Đơn hàng đã bị hủy',
+};
+
+/** Một câu giải thích cho khách biết đơn đang ở đâu và bước tiếp theo là gì. */
+export const STATUS_NOTES: Record<OrderStatus, string> = {
+  pending: 'Cảm ơn bạn đã đặt hàng. Shop sẽ sớm liên hệ qua số điện thoại của bạn để xác nhận đơn.',
+  confirmed: 'Shop đã liên hệ và xác nhận đơn. Đơn đang được chuẩn bị để giao cho bạn.',
+  shipping: 'Đơn đang trên đường đến bạn. Vui lòng giữ máy và chuẩn bị tiền thanh toán khi nhận hàng.',
+  completed: 'Đơn đã được giao thành công. Cảm ơn bạn đã mua hàng!',
+  cancelled: 'Đơn hàng đã bị hủy. Nếu cần hỗ trợ, hãy liên hệ shop kèm mã đơn.',
+};
+
+/** Nhãn ngắn cho trang quản trị (nút chuyển trạng thái). */
+export const STATUS_ADMIN_LABELS: Record<OrderStatus, string> = {
   pending: 'Chờ xác nhận',
   confirmed: 'Đã xác nhận',
   shipping: 'Đang giao',

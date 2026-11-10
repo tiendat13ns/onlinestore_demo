@@ -1,13 +1,13 @@
 import type { ReactNode } from 'react';
 import { formatDateTime, formatMoney } from '../lib/money';
-import { STATUS_LABELS, type Order, type OrderStatus } from '../types';
+import { STATUS_LABELS, STATUS_NOTES, type Order, type OrderStatus } from '../types';
 import Totals from './Totals';
 
 const STEPS: OrderStatus[] = ['pending', 'confirmed', 'shipping', 'completed'];
 
 /** Tiến trình đơn: các bước đã qua được tô đậm, bước hiện tại đánh dấu bằng chấm và chữ đậm (không chỉ dựa vào màu). */
 export function OrderProgress({ status }: { status: OrderStatus }) {
-  if (status === 'cancelled') return <p className="order-cancelled">Đơn hàng đã được hủy.</p>;
+  if (status === 'cancelled') return <p className="order-cancelled">{STATUS_NOTES.cancelled}</p>;
   const current = STEPS.indexOf(status);
   return (
     <ol className="progress" aria-label="Tiến trình đơn hàng">
@@ -34,6 +34,7 @@ export default function OrderDetails({ order, children }: { order: Order; childr
       </header>
 
       <OrderProgress status={order.status} />
+      {order.status !== 'cancelled' && <p className="order-note">{STATUS_NOTES[order.status]}</p>}
 
       <table className="order-lines">
         <thead>

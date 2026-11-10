@@ -234,7 +234,7 @@ export default function Orders() {
                             Hủy đơn
                           </button>
                         )}
-                        <p className="small muted">Bạn chỉ tự hủy được khi đơn còn "Chờ xác nhận".</p>
+                        <p className="small muted">Bạn tự hủy được khi shop chưa liên hệ xác nhận đơn.</p>
                       </div>
                     )}
                     {order.status !== 'pending' && order.status !== 'cancelled' && order.status !== 'completed' && (

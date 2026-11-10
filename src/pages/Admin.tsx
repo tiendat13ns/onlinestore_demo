@@ -2,7 +2,7 @@ import { useCallback, useEffect, useState, type FormEvent } from 'react';
 import { ApiError, adminSession, api, type AdminProduct } from '../lib/api';
 import { formatDateTime, formatMoney } from '../lib/money';
 import { useTitle } from '../lib/useTitle';
-import { STATUS_LABELS, type AdminOrder, type OrderStatus } from '../types';
+import { STATUS_ADMIN_LABELS, type AdminOrder, type OrderStatus } from '../types';
 
 const NEXT: Record<OrderStatus, OrderStatus[]> = {
   pending: ['confirmed', 'cancelled'],
@@ -118,11 +118,11 @@ function OrdersTab({ onAuthLost }: { onAuthLost: () => void }) {
                 </td>
                 <td>{formatMoney(o.subtotal, o.currency)}</td>
                 <td>
-                  <strong>{STATUS_LABELS[o.status]}</strong>
+                  <strong>{STATUS_ADMIN_LABELS[o.status]}</strong>
                   <div className="status-actions">
                     {NEXT[o.status].map((next) => (
                       <button key={next} type="button" className="btn btn-secondary" onClick={() => change(o.code, next)}>
-                        → {STATUS_LABELS[next]}
+                        → {STATUS_ADMIN_LABELS[next]}
                       </button>
                     ))}
                   </div>

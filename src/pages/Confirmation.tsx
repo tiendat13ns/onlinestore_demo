@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import OrderDetails from '../components/OrderDetails';
 import { useCart } from '../lib/CartContext';
 import { useTitle } from '../lib/useTitle';
+import { STATUS_LABELS } from '../types';
 
 export default function Confirmation() {
   const { order } = useCart();
@@ -80,13 +81,16 @@ export default function Confirmation() {
         <h2 id="next-h">Tiếp theo</h2>
         <ol className="next-steps">
           <li>
-            <strong>Xác nhận đơn.</strong> Cửa hàng xử lý trong 1–2 ngày làm việc và thông báo phí vận chuyển.
+            <strong>{STATUS_LABELS.pending}.</strong> Đơn của bạn đã được ghi nhận với mã {order.code}.
           </li>
           <li>
-            <strong>Giao hàng.</strong> Nhận hàng trong 2–5 ngày làm việc tùy khu vực.
+            <strong>{STATUS_LABELS.confirmed}.</strong> Trong 1–2 ngày làm việc, shop gọi vào số bạn đã nhập và báo phí vận chuyển.
           </li>
           <li>
-            <strong>Thanh toán khi nhận hàng.</strong> Kiểm tra sản phẩm rồi mới trả tiền.
+            <strong>{STATUS_LABELS.shipping}.</strong> Bạn nhận hàng trong 2–5 ngày làm việc tùy khu vực.
+          </li>
+          <li>
+            <strong>{STATUS_LABELS.completed}.</strong> Kiểm tra sản phẩm rồi mới thanh toán cho người giao hàng (COD).
           </li>
         </ol>
       </section>
