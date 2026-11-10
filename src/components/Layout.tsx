@@ -70,9 +70,9 @@ export default function Layout() {
             <ul>
               <li><Link to="/products">Tất cả sản phẩm</Link></li>
               <li><Link to="/products?category=deskmat">Deskmat</Link></li>
-              <li><Link to="/products?category=cable">Quản lý dây</Link></li>
-              <li><Link to="/products?category=accessory">Phụ kiện bàn</Link></li>
-              <li><Link to="/products?category=bundle">Bộ sản phẩm</Link></li>
+              <li><Link to="/products?category=pad-nho">Pad chuột size nhỏ</Link></li>
+              <li><Link to="/products?category=keycap">Keycap</Link></li>
+              <li><Link to="/products?category=khay-duoi-ban">Khay dưới bàn</Link></li>
             </ul>
           </nav>
           <nav aria-label="Hỗ trợ">

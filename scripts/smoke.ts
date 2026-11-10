@@ -54,10 +54,25 @@ check('seed chạy lại giữ giá và tồn kho đã chỉnh', reseeded.price 
 check('seed chạy lại cập nhật ảnh sản phẩm', reseededImages.n > 0, reseededImages);
 await pg.query("update variants set price = 249000, stock = 20 where id = 'dm-a-m-grey'");
 
+// Chạy lại seed trên DB cũ: sản phẩm đã bỏ bị xóa, biến thể đã chuyển sản phẩm được cập nhật product_id.
+await pg.exec(`
+  insert into products (id, slug, name, category, kind, short_description, description, images, attribute_names, related_ids, sort_order)
+  values ('p-bd-d', 'bo-setup-essentials', 'Bộ Setup Essentials', 'bundle', 'bundle', '', '', '[]', '[]', '[]', 99);
+  insert into variants (id, product_id, attributes, price, stock, specs, sort_order) values ('bd-d-std', 'p-bd-d', '{}', 319000, 20, '[]', 0);
+  update variants set product_id = 'p-tr-l', price = 300000, stock = 7 where id = 'tr-l-white';
+`);
+await pg.exec(readFileSync('supabase/seed.sql', 'utf8'));
+const gone = (await pg.query("select 1 from products where id = 'p-bd-d' union all select 1 from variants where id = 'bd-d-std'")).rows;
+check('seed chạy lại xóa sản phẩm đã bỏ khỏi catalog', gone.length === 0, gone);
+const moved = (await pg.query<{ product_id: string; price: number; stock: number }>("select product_id, price, stock from variants where id = 'tr-l-white'")).rows[0];
+check('seed chạy lại chuyển biến thể sang sản phẩm mới, giữ giá/tồn kho', moved.product_id === 'p-tw-r' && moved.price === 300000 && moved.stock === 7, moved);
+await pg.query("update variants set price = 329000, stock = 20 where id = 'tr-l-white'");
+
 // ---- Catalog công khai
 let r = await call('GET', '/api/catalog');
 check('catalog 200', r.status === 200, r.body);
-check('catalog có 15 sản phẩm', r.body.products?.length === 15);
+check('catalog có 18 sản phẩm', r.body.products?.length === 18, r.body.products?.length);
+check('catalog không còn bộ sản phẩm', r.body.products.every((p: Json) => p.kind !== 'bundle'));
 check('catalog có đơn vị tiền', r.body.currency === 'VND');
 check('catalog không lộ số tồn kho', r.body.products.every((p: Json) => p.variants.every((v: Json) => !('stock' in v) && v.inStock === true)));
 check('đường dẫn Netlify cũng chạy', (await call('GET', '/.netlify/functions/api/catalog')).status === 200);
@@ -85,13 +100,13 @@ const stockOf = async (id: string): Promise<number> => {
 };
 
 // ---- Đặt đơn
-r = await order([{ variantId: 'bd-d-std', quantity: 2 }]);
-check('đặt bộ → 201', r.status === 201, r.body);
-check('server tính giá: 2 × 319000', r.body.subtotal === 638000, r.body.subtotal);
+r = await order([{ variantId: 'kc-h-grad-bp', quantity: 2 }]);
+check('đặt đơn → 201', r.status === 201, r.body);
+check('server tính giá: 2 × 245000', r.body.subtotal === 490000, r.body.subtotal);
+check('tên dòng hàng kèm biến thể', r.body.lines[0].name === 'Veekos Gradient PBT (Black & Pink)', r.body.lines[0].name);
 check('mã đơn OD-', /^OD-[0-9A-F]{8}$/.test(r.body.code), r.body.code);
 check('đơn vừa đặt kèm SĐT/địa chỉ cho chính người đặt', r.body.customerPhone === customer.phone && r.body.customerAddress === customer.address, r.body);
-check('thành phần bộ có tên', r.body.lines[0].components.length === 2, r.body.lines[0].components);
-check('trừ kho bộ: 20 → 18', (await stockOf('bd-d-std')) === 18);
+check('trừ kho: 20 → 18', (await stockOf('kc-h-grad-bp')) === 18);
 const code: string = r.body.code;
 
 check('thiếu tên → 400', (await order([{ variantId: 'dm-a-m-grey', quantity: 1 }], { ...customer, name: ' ' })).status === 400);
@@ -136,7 +151,7 @@ check('pending → completed bị chặn', (await call('PATCH', `/api/admin/orde
 check('trạng thái lạ → 400', (await call('PATCH', `/api/admin/orders/${code}/status`, { status: 'abc' }, token)).status === 400);
 check('pending → confirmed', (await call('PATCH', `/api/admin/orders/${code}/status`, { status: 'confirmed' }, token)).body.status === 'confirmed');
 check('hủy đơn', (await call('PATCH', `/api/admin/orders/${code}/status`, { status: 'cancelled' }, token)).body.status === 'cancelled');
-check('hủy đơn hoàn kho: 18 → 20', (await stockOf('bd-d-std')) === 20);
+check('hủy đơn hoàn kho: 18 → 20', (await stockOf('kc-h-grad-bp')) === 20);
 check('đơn đã hủy không đổi nữa', (await call('PATCH', `/api/admin/orders/${code}/status`, { status: 'confirmed' }, token)).status === 409);
 check('đơn không tồn tại → 404', (await call('PATCH', '/api/admin/orders/OD-NOPE/status', { status: 'confirmed' }, token)).status === 404);
 
@@ -170,7 +185,7 @@ r = await call('PATCH', '/api/admin/variants/dm-a-m-grey', { price: 260000, stoc
 check('sửa giá và tồn kho', r.status === 200 && r.body.price === 260000 && r.body.stock === 7, r.body);
 check('tồn kho âm bị chặn', (await call('PATCH', '/api/admin/variants/dm-a-m-grey', { stock: -1 }, token)).status === 400);
 check('giá chữ bị chặn', (await call('PATCH', '/api/admin/variants/dm-a-m-grey', { price: 'abc' }, token)).status === 400);
-check('đơn cũ giữ giá lúc đặt', (await lookup(code, customer.phone)).body.subtotal === 638000);
+check('đơn cũ giữ giá lúc đặt', (await lookup(code, customer.phone)).body.subtotal === 490000);
 await call('PATCH', '/api/admin/variants/dm-a-m-grey', { stock: 0 }, token);
 check('hết hàng → inStock=false', (await call('GET', '/api/catalog')).body.products[0].variants.find((v: Json) => v.id === 'dm-a-m-grey').inStock === false);
 check('hết hàng → không đặt được', (await order([{ variantId: 'dm-a-m-grey', quantity: 1 }])).status === 409);

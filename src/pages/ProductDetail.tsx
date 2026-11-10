@@ -76,8 +76,8 @@ function ProductView({ product }: { product: Product }) {
       else dropped.push(a.name);
     }
     setSelection(next);
-    const matched = product.images.findIndex((img) => img.match && Object.entries(img.match).every(([k, v]) => (Array.isArray(v) ? v : [v]).includes(next[k])));
-    if (matched >= 0) setImageIndex(matched);
+    // Gallery chuyển sang bộ ảnh của lựa chọn mới, bắt đầu từ ảnh đầu tiên.
+    setImageIndex(0);
     setConflict(dropped.length ? `Tổ hợp này không tồn tại; đã bỏ chọn ${dropped.join(', ')}. Vui lòng chọn lại.` : null);
     setAttrErrors({});
     setNotice(null);
@@ -116,7 +116,13 @@ function ProductView({ product }: { product: Product }) {
   };
 
   const price = variant ? formatMoney(variant.price, catalog.currency) : priceText(product, catalog.currency);
-  const image = product.images[imageIndex];
+  // Chỉ hiện ảnh của biến thể đang chọn (ví dụ Màu: Dark Rose → 4 ảnh Dark Rose). Ảnh không gắn biến thể luôn hiện;
+  // thuộc tính chưa chọn thì không lọc theo thuộc tính đó.
+  const shown = product.images.filter(
+    (img) => !img.match || Object.entries(img.match).every(([k, v]) => !selection[k] || (Array.isArray(v) ? v : [v]).includes(selection[k])),
+  );
+  const images = shown.length > 0 ? shown : product.images;
+  const image = images[Math.min(imageIndex, images.length - 1)];
   const specs = (variant?.specs ?? product.variants[0]?.specs ?? []).filter((s) => s.value !== null);
   const includesList =
     product.kind === 'bundle'
@@ -141,11 +147,11 @@ function ProductView({ product }: { product: Product }) {
         <div className="gallery">
           <ProductImage image={image} art={artFor(product, variant, imageIndex)} className="gallery-main" />
           <p className="small muted">
-            Ảnh {imageIndex + 1}/{product.images.length}
+            Ảnh {Math.min(imageIndex, images.length - 1) + 1}/{images.length}
             {!image?.src && ' · Hình minh họa theo màu và cỡ đã chọn'}
           </p>
           <div className="thumbs">
-            {product.images.map((img, i) => (
+            {images.map((img, i) => (
               <button
                 key={i}
                 type="button"

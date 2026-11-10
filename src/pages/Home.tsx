@@ -1,19 +1,9 @@
 ﻿import { Link } from 'react-router-dom';
-import { priceText } from '../components/ProductCard';
-import OrderLookupBand from '../components/OrderLookupBand';
 import ProductSection from '../components/ProductSection';
 import { CatalogGate, ProductSkeleton } from '../components/StatusMessages';
-import { BRAND_NAME, CABLE_IDS, FEATURED_IDS, NEW_IDS, PROMO_ID } from '../config';
+import { BRAND_NAME, FEATURED_IDS, NEW_IDS } from '../config';
 import { useCatalog } from '../lib/CatalogContext';
 import { useTitle } from '../lib/useTitle';
-import { CATEGORIES } from '../types';
-
-const CATEGORY_IMAGES: Record<string, { src: string; alt: string; position: string }> = {
-  deskmat: { src: '/images/deskmat-slate-xam.jpg', alt: 'Deskmat Slate màu xám', position: '50% 50%' },
-  cable: { src: '/images/kep-day-3-ranh.jpg', alt: 'Kẹp dây Clip 3 rãnh', position: '50% 50%' },
-  accessory: { src: '/images/keycap-veekos-roselatte-1.jpg', alt: 'Bộ keycap chuyển màu Rose Latte', position: '50% 50%' },
-  bundle: { src: '/images/combo-slate-clip.jpg', alt: 'Deskmat Slate, bàn phím, chuột và kẹp dây trên bàn gỗ', position: '28% 50%' },
-};
 
 const REASONS: [string, string][] = [
   ['Chọn lọc, không chạy theo số lượng', 'Mỗi món trong cửa hàng có một công dụng rõ ràng cho góc bàn.'],
@@ -25,16 +15,12 @@ const REASONS: [string, string][] = [
 function HomeProducts() {
   const { catalog } = useCatalog();
   const pick = (ids: string[]) => ids.map((id) => catalog.products.find((p) => p.id === id)).filter((p) => p !== undefined);
-  const featured = pick(FEATURED_IDS);
-  const newest = pick(NEW_IDS);
-  const cables = pick(CABLE_IDS);
-  const promo = catalog.products.find((p) => p.id === PROMO_ID);
 
   return (
     <>
-      <ProductSection id="best-h" title="Sản phẩm nổi bật" products={featured} moreTo="/products" moreLabel="Xem tất cả" />
+      <ProductSection id="best-h" title="Sản phẩm nổi bật" products={pick(FEATURED_IDS)} moreTo="/products" moreLabel="Xem tất cả" />
 
-      <ProductSection id="new-h" title="Mới về" products={newest} moreTo="/products?category=accessory" moreLabel="Xem tất cả phụ kiện" />
+      <ProductSection id="new-h" title="Mới về" products={pick(NEW_IDS)} moreTo="/products" moreLabel="Xem tất cả sản phẩm" />
 
       <section className="perks" aria-labelledby="why-h">
         <div className="wrap">
@@ -49,28 +35,6 @@ function HomeProducts() {
           </ul>
         </div>
       </section>
-
-      <OrderLookupBand />
-
-      {promo && (
-        <section className="section-tight wrap" aria-labelledby="promo-h">
-          <div className="promo" data-reveal>
-            <div className="promo-copy">
-              <h2 id="promo-h">{promo.name}</h2>
-              <p>{promo.shortDescription}</p>
-              <p className="promo-price">{priceText(promo, catalog.currency)}</p>
-              <Link className="btn btn-paper" to={`/products/${promo.slug}`}>
-                Xem bộ sản phẩm
-              </Link>
-            </div>
-            <div className="promo-img">
-              <img src={promo.images[0]?.src} alt={promo.images[0]?.alt ?? promo.name} loading="lazy" width="1400" height="933" />
-            </div>
-          </div>
-        </section>
-      )}
-
-      <ProductSection id="cable-h" title="Quản lý dây gọn gàng" products={cables} moreTo="/products?category=cable" moreLabel="Xem tất cả quản lý dây" />
 
       <section className="section-tight wrap" aria-labelledby="about-h">
         <div className="intro-card" data-reveal>
@@ -88,8 +52,8 @@ function HomeProducts() {
   );
 }
 
-function HomeContent() {
-
+export default function Home() {
+  useTitle('Deskmat và phụ kiện cho góc bàn gọn gàng');
   return (
     <>
       <section className="hero" aria-labelledby="hero-h">
@@ -112,31 +76,9 @@ function HomeContent() {
         </div>
       </section>
 
-      <section className="section wrap" aria-labelledby="cat-h">
-        <h2 id="cat-h" data-reveal>Mua theo nhóm</h2>
-        <ul className="cat-grid">
-          {CATEGORIES.map((c, i) => {
-            const img = CATEGORY_IMAGES[c.id];
-            return (
-              <li key={c.id} data-reveal style={{ '--d': `${i * 70}ms` } as React.CSSProperties}>
-                <Link to={`/products?category=${c.id}`} className="cat-tile">
-                  <img src={img.src} alt={img.alt} loading="lazy" style={{ objectPosition: img.position }} />
-                  <span className="cat-name">{c.label}</span>
-                </Link>
-              </li>
-            );
-          })}
-        </ul>
-      </section>
-
-      <CatalogGate fallback={<ProductSkeleton rows={3} />}>
+      <CatalogGate fallback={<ProductSkeleton rows={2} />}>
         <HomeProducts />
       </CatalogGate>
     </>
   );
-}
-
-export default function Home() {
-  useTitle('Deskmat và phụ kiện cho góc bàn gọn gàng');
-  return <HomeContent />;
 }

@@ -1,8 +1,9 @@
 import { useEffect, useRef, useState } from 'react';
 import { Link, NavLink, useLocation } from 'react-router-dom';
-import { BRAND_NAME, MEGA_MENU, MEGA_TILES } from '../config';
+import { BRAND_NAME, MEGA_TILES } from '../config';
 import { useCart } from '../lib/CartContext';
 import { useCatalog } from '../lib/CatalogContext';
+import { CATEGORIES } from '../types';
 import SearchBox from './SearchBox';
 
 const icon = { width: 22, height: 22, viewBox: '0 0 24 24', fill: 'none', stroke: 'currentColor', strokeWidth: 1.8, strokeLinecap: 'round', strokeLinejoin: 'round', 'aria-hidden': true } as const;
@@ -72,7 +73,11 @@ export default function SiteHeader() {
     };
   }, [menuOpen, mega]);
 
-  const productFor = (id: string) => catalog.products.find((p) => p.id === id);
+  // Mỗi cột = một nhóm (đúng tên folder), liệt kê sản phẩm của nhóm theo thứ tự catalog.
+  const menu = CATEGORIES.map((category) => ({
+    category,
+    products: catalog.products.filter((p) => p.category === category.id),
+  }));
 
   return (
     <>
@@ -111,13 +116,13 @@ export default function SiteHeader() {
                       <Link to="/products">Xem tất cả sản phẩm ›</Link>
                     </div>
                     <div className="mega-cols">
-                      {MEGA_MENU.map((g) => (
-                        <div key={g.heading} className="mega-col">
-                          <Link to={g.to} className="mega-heading">
-                            {g.heading}
+                      {menu.map(({ category, products }) => (
+                        <div key={category.id} className="mega-col">
+                          <Link to={`/products?category=${category.id}`} className="mega-heading">
+                            {category.label}
                           </Link>
                           <ul>
-                            {g.ids.map(productFor).filter((p) => p !== undefined).map((p) => (
+                            {products.map((p) => (
                               <li key={p.id}>
                                 <Link to={`/products/${p.slug}`}>{p.name}</Link>
                               </li>

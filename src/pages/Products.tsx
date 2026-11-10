@@ -2,7 +2,6 @@ import { useEffect, useMemo } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import ProductCard from '../components/ProductCard';
 import { CatalogGate } from '../components/StatusMessages';
-import { SUBGROUPS } from '../config';
 import { minPrice, useCatalog } from '../lib/CatalogContext';
 import { matchProducts } from '../lib/search';
 import { useTitle } from '../lib/useTitle';
@@ -37,8 +36,6 @@ function ProductList() {
 
   const rawCategory = params.get('category');
   const category: CategoryId | null = isCategory(rawCategory) ? rawCategory : null;
-  const groups = (category && SUBGROUPS[category]) || [];
-  const group = groups.find((g) => g.id === params.get('group')) ?? null;
   const q = (params.get('q') ?? '').trim();
   const rawSort = params.get('sort');
   const sort: Sort = SORTS.some((s) => s.id === rawSort) ? (rawSort as Sort) : 'default';
@@ -53,16 +50,14 @@ function ProductList() {
   }, [rawCategory, category, params, setParams]);
 
   const visible = useMemo(() => {
-    const byCategory = category ? catalog.products.filter((p) => p.category === category) : catalog.products;
-    const filtered = group ? byCategory.filter((p) => group.productIds.includes(p.id)) : byCategory;
+    const filtered = category ? catalog.products.filter((p) => p.category === category) : catalog.products;
     const searched = q ? matchProducts(filtered, q).map((m) => m.product) : filtered;
     return sortProducts(searched, sort);
-  }, [catalog.products, category, group, q, sort]);
+  }, [catalog.products, category, q, sort]);
 
-  const linkFor = (id: CategoryId | null, groupId: string | null = null, keepQ = true) => {
+  const linkFor = (id: CategoryId | null, keepQ = true) => {
     const next = new URLSearchParams();
     if (id) next.set('category', id);
-    if (id && groupId) next.set('group', groupId);
     if (keepQ && q) next.set('q', q);
     if (sort !== 'default') next.set('sort', sort);
     const qs = next.toString();
@@ -89,23 +84,10 @@ function ProductList() {
         ))}
       </nav>
 
-      {category && groups.length > 0 && (
-        <nav aria-label="Lọc theo loại" className="filters filters-sub">
-          <Link to={linkFor(category)} aria-current={group === null ? 'true' : undefined}>
-            Tất cả loại
-          </Link>
-          {groups.map((g) => (
-            <Link key={g.id} to={linkFor(category, g.id)} aria-current={group?.id === g.id ? 'true' : undefined}>
-              {g.label}
-            </Link>
-          ))}
-        </nav>
-      )}
-
       <div className="results-bar">
         <p role="status">
           {visible.length} sản phẩm{q ? ` cho “${q}”` : ''}{' '}
-          {q && <Link to={linkFor(category, group?.id ?? null, false)}>Xóa tìm kiếm</Link>}
+          {q && <Link to={linkFor(category, false)}>Xóa tìm kiếm</Link>}
         </p>
         <label>
           Sắp xếp{' '}
@@ -145,7 +127,7 @@ export default function Products() {
         <Link to="/">Trang chủ</Link> / <span aria-current="page">Sản phẩm</span>
       </nav>
       <h1 data-reveal>Sản phẩm</h1>
-      <p>Deskmat, phụ kiện quản lý dây và bộ sản phẩm cho góc làm việc của bạn.</p>
+      <p>Deskmat, pad chuột, phụ kiện bàn phím và đồ quản lý dây cho góc làm việc của bạn.</p>
       <CatalogGate>
         <ProductList />
       </CatalogGate>

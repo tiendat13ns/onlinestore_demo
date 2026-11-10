@@ -39,11 +39,11 @@ try {
   check('pg: đăng nhập admin', login.status === 200 && !!token);
 
   const o = await call('POST', '/api/orders', {
-    lines: [{ variantId: 'bd-d-std', quantity: 1 }, { variantId: 'dm-a-m-black', quantity: 2 }],
+    lines: [{ variantId: 'kc-h-grad-bp', quantity: 1 }, { variantId: 'dm-a-m-black', quantity: 2 }],
     customer: { name: 'Test', phone: '0900000000', address: 'So 1 Dai Co Viet, Hai Ba Trung, Ha Noi' },
   });
   check('pg: đặt đơn nhiều dòng → 201', o.status === 201, o.body);
-  check('pg: subtotal đúng (319000 + 2×249000)', o.body.subtotal === 319000 + 2 * 249000, o.body.subtotal);
+  check('pg: subtotal đúng (245000 + 2×249000)', o.body.subtotal === 245000 + 2 * 249000, o.body.subtotal);
   check('pg: createdAt là ISO', !Number.isNaN(Date.parse(o.body.createdAt)) && o.body.createdAt.endsWith('Z'), o.body.createdAt);
 
   const over = await call('POST', '/api/orders', {

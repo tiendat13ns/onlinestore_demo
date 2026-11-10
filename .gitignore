@@ -12,3 +12,6 @@ dist
 # Ảnh gốc nặng (đã nén vào public/images), không đưa lên GitHub
 /Online Store assets/
 /Week 2-*/
+
+# Ghi chú yêu cầu cá nhân
+/mrbeast.md

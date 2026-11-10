@@ -42,7 +42,7 @@ export function colorOf(variant?: Variant): string {
 export function artFor(product: Product, variant?: Variant, view = 0): ArtSpec {
   const v = variant ?? product.variants[0];
   const priced = product.variants.some((x) => x.price !== null);
-  const kind: ArtKind = product.kind === 'bundle' ? 'bundle' : product.category === 'cable' ? 'clip' : priced ? 'mat' : 'soon';
+  const kind: ArtKind = product.kind === 'bundle' ? 'bundle' : product.category === 'kep-day' ? 'clip' : priced ? 'mat' : 'soon';
   return { kind, color: kind === 'soon' ? SOON : colorOf(v), view, label: product.name, size: matSize(v) };
 }
 

@@ -10,7 +10,7 @@ const json = (v: unknown) => `${str(JSON.stringify(v))}::jsonb`;
 
 const out: string[] = [
   '-- Dữ liệu mẫu cho Tam Thái Tử Store. SINH TỰ ĐỘNG từ src/data/catalog.ts bằng `npm run db:seed-sql`; đừng sửa tay.',
-  '-- Chạy SAU schema.sql. Chạy lại an toàn: cập nhật nội dung sản phẩm (tên, mô tả, ảnh, thông số), thêm biến thể mới, nhưng KHÔNG ghi đè giá/tồn kho đã chỉnh trong /admin.',
+  '-- Chạy SAU schema.sql. Chạy lại an toàn: cập nhật nội dung sản phẩm (tên, mô tả, ảnh, thông số), thêm biến thể mới, xóa sản phẩm/biến thể đã bỏ khỏi catalog, nhưng KHÔNG ghi đè giá/tồn kho đã chỉnh trong /admin.',
   '',
 ];
 
@@ -38,10 +38,19 @@ catalog.products.forEach((p) => {
         str(v.id), str(p.id), json(v.attributes), v.price === null ? 'null' : v.price, SEED_STOCK, json(v.specs),
         v.components ? json(v.components) : 'null', j,
       ].join(', ')})`,
-      'on conflict (id) do update set attributes = excluded.attributes, specs = excluded.specs, components = excluded.components, sort_order = excluded.sort_order;',
+      'on conflict (id) do update set product_id = excluded.product_id, attributes = excluded.attributes, specs = excluded.specs, components = excluded.components, sort_order = excluded.sort_order;',
     );
   });
 });
+out.push('');
+
+// Sản phẩm/biến thể đã bỏ khỏi catalog thì xóa khỏi DB. Đơn cũ không bị ảnh hưởng: order_lines lưu sẵn tên và giá.
+const list = (ids: string[]) => ids.map(str).join(', ');
+out.push(
+  '-- Xóa sản phẩm và biến thể không còn trong catalog.',
+  `delete from variants where id not in (${list(catalog.products.flatMap((p) => p.variants.map((v) => v.id)))});`,
+  `delete from products where id not in (${list(catalog.products.map((p) => p.id))});`,
+);
 
 writeFileSync('supabase/seed.sql', out.join('\n') + '\n');
 console.log(`supabase/seed.sql: ${catalog.products.length} sản phẩm, ${catalog.products.reduce((n, p) => n + p.variants.length, 0)} biến thể`);

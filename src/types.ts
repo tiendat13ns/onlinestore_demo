@@ -1,4 +1,16 @@
-export type CategoryId = 'deskmat' | 'cable' | 'accessory' | 'bundle';
+/** Nhóm sản phẩm. Các nhóm có ảnh trong folder "Week 2" mang đúng tên folder đó. */
+export type CategoryId =
+  | 'deskmat'
+  | 'pad-nho'
+  | 'ke-tay'
+  | 'keycap'
+  | 'khay-keycap'
+  | 'kep-day'
+  | 'day-buoc'
+  | 'ong-boc'
+  | 'khay-duoi-ban'
+  | 'moc-tai-nghe'
+  | 'do-de-ban';
 
 export interface CategoryInfo {
   id: CategoryId;
@@ -7,10 +19,17 @@ export interface CategoryInfo {
 }
 
 export const CATEGORIES: CategoryInfo[] = [
-  { id: 'deskmat', label: 'Deskmat', description: 'Tấm lót bàn cho góc làm việc và chơi game.' },
-  { id: 'cable', label: 'Quản lý dây', description: 'Phụ kiện giữ dây gọn gàng trên bàn.' },
-  { id: 'accessory', label: 'Phụ kiện bàn', description: 'Kê tay, keycap, giá đỡ và khay để bàn gọn hơn.' },
-  { id: 'bundle', label: 'Bộ sản phẩm', description: 'Các bộ phối sẵn để bắt đầu nhanh.' },
+  { id: 'deskmat', label: 'Deskmat', description: 'Tấm lót bàn và pad cỡ lớn cho góc làm việc và chơi game.' },
+  { id: 'pad-nho', label: 'Pad chuột size nhỏ', description: 'Pad chuột nhỏ gọn cho bàn hẹp hoặc chỉ lót khu vực chuột.' },
+  { id: 'ke-tay', label: 'Kê tay', description: 'Đệm tựa cổ tay trước bàn phím.' },
+  { id: 'keycap', label: 'Keycap', description: 'Bộ keycap và keycap điểm nhấn để phối màu.' },
+  { id: 'khay-keycap', label: 'Khay keycap', description: 'Khay cất keycap dư và dụng cụ tháo phím.' },
+  { id: 'kep-day', label: 'Kẹp dây', description: 'Kẹp giữ đầu dây đúng chỗ trên mặt bàn.' },
+  { id: 'day-buoc', label: 'Dây buộc cáp', description: 'Dây velcro gom dây thừa, dùng lại nhiều lần.' },
+  { id: 'ong-boc', label: 'Ống bọc dây', description: 'Gom nhiều dây chạy chung một đường.' },
+  { id: 'khay-duoi-ban', label: 'Khay dưới bàn', description: 'Khay kẹp dưới mặt bàn để ổ cắm, củ sạc và dây thừa.' },
+  { id: 'moc-tai-nghe', label: 'Móc tai nghe', description: 'Móc treo tai nghe dưới mặt bàn.' },
+  { id: 'do-de-ban', label: 'Đồ để bàn', description: 'Giá đỡ điện thoại và khay đồ nhỏ.' },
 ];
 
 export function isCategory(value: string | null): value is CategoryId {
